@@ -1,0 +1,5 @@
+"./Src/002led_button.o"
+"./Src/syscalls.o"
+"./Src/sysmem.o"
+"./Startup/startup_stm32l073rztx.o"
+"./drivers/Src/stm32l07xx_gpio_driver.o"
