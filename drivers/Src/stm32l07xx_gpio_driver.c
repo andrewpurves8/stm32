@@ -45,8 +45,6 @@ void GPIO_PeriClockControl(GPIO_RegDef_t *pGPIOx, uint8_t en)
 
 void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 {
-	uint32_t temp=0;
-
 	// enable the peripheral clock
 	GPIO_PeriClockControl(pGPIOHandle->pGPIOx, ENABLE);
 
@@ -54,63 +52,59 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 	if (pGPIOHandle->pinConfig.pinMode <= GPIO_MODE_ANALOG)
 	{
 		// non interrupt mode
-		temp = (pGPIOHandle->pinConfig.pinMode << (2 * pGPIOHandle->pinConfig.pinNumber ));
 		pGPIOHandle->pGPIOx->MODER &= ~(0x3 << (2 * pGPIOHandle->pinConfig.pinNumber));
-		pGPIOHandle->pGPIOx->MODER |= temp;
+		pGPIOHandle->pGPIOx->MODER |= pGPIOHandle->pinConfig.pinMode << (2 * pGPIOHandle->pinConfig.pinNumber);
 	}
 	else
 	{
-		// if (pGPIOHandle->pinConfig.pinMode == GPIO_MODE_IT_FT)
-		// {
-		// 	//1. configure the FTSR
-		// 	EXTI->FTSR |= (1 << pGPIOHandle->pinConfig.pinNumber);
-		// 	//Clear the corresponding RTSR bit
-		// 	EXTI->RTSR &= ~(1 << pGPIOHandle->pinConfig.pinNumber);
+		pGPIOHandle->pGPIOx->MODER &= ~(0x3 << (2 * pGPIOHandle->pinConfig.pinNumber));
+		pGPIOHandle->pGPIOx->MODER |= GPIO_MODE_IN << (2 * pGPIOHandle->pinConfig.pinNumber);
 
-		// }
-		// else if (pGPIOHandle->pinConfig.pinMode ==GPIO_MODE_IT_RT)
-		// {
-		// 	//1 . configure the RTSR
-		// 	EXTI->RTSR |= (1 << pGPIOHandle->pinConfig.pinNumber);
-		// 	//Clear the corresponding RTSR bit
-		// 	EXTI->FTSR &= ~(1 << pGPIOHandle->pinConfig.pinNumber);
+		if (pGPIOHandle->pinConfig.pinMode == GPIO_MODE_IT_FT)
+		{
+			// configure the FTSR
+			REG_SET_BIT(EXTI->FTSR, pGPIOHandle->pinConfig.pinNumber);
+			// clear the corresponding RTSR bit
+			REG_CLEAR_BIT(EXTI->RTSR, pGPIOHandle->pinConfig.pinNumber);
+		}
+		else if (pGPIOHandle->pinConfig.pinMode == GPIO_MODE_IT_RT)
+		{
+			// configure the RTSR
+			REG_SET_BIT(EXTI->RTSR, pGPIOHandle->pinConfig.pinNumber);
+			// clear the corresponding FTSR bit
+			REG_CLEAR_BIT(EXTI->FTSR, pGPIOHandle->pinConfig.pinNumber);
+		}
+		else if (pGPIOHandle->pinConfig.pinMode == GPIO_MODE_IT_RFT)
+		{
+			// configure both FTSR and RTSR
+			REG_SET_BIT(EXTI->RTSR, pGPIOHandle->pinConfig.pinNumber);
+			REG_SET_BIT(EXTI->FTSR, pGPIOHandle->pinConfig.pinNumber);
+		}
 
-		// }
-		// else if (pGPIOHandle->pinConfig.pinMode == GPIO_MODE_IT_RFT)
-		// {
-		// 	//1. configure both FTSR and RTSR
-		// 	EXTI->RTSR |= (1 << pGPIOHandle->pinConfig.pinNumber);
-		// 	//Clear the corresponding RTSR bit
-		// 	EXTI->FTSR |= (1 << pGPIOHandle->pinConfig.pinNumber);
-		// }
+		// configure the GPIO port selection in SYSCFG_EXTICR
+		uint8_t extix = pGPIOHandle->pinConfig.pinNumber / 4 ;
+		uint8_t extixSecion = pGPIOHandle->pinConfig.pinNumber % 4;
+		uint8_t portCode = GPIO_BASEADDR_TO_CODE(pGPIOHandle->pGPIOx);
+		SYSCFG_PCLK_EN();
+		SYSCFG->EXTICR[extix] = portCode << (extixSecion * 4);
 
-		// //2. configure the GPIO port selection in SYSCFG_EXTICR
-		// uint8_t temp1 = pGPIOHandle->pinConfig.pinNumber / 4 ;
-		// uint8_t temp2 = pGPIOHandle->pinConfig.pinNumber % 4;
-		// uint8_t portcode = GPIO_BASEADDR_TO_CODE(pGPIOHandle->pGPIOx);
-		// SYSCFG_PCLK_EN();
-		// SYSCFG->EXTICR[temp1] = portcode << (temp2 * 4);
-
-		// //3 . enable the exti interrupt delivery using IMR
-		// EXTI->IMR |= 1 << pGPIOHandle->pinConfig.pinNumber;
+		// enable the exti interrupt delivery using IMR
+		REG_SET_BIT(EXTI->IMR, pGPIOHandle->pinConfig.pinNumber);
 	}
 
-	//2. configure the speed
-	temp = (pGPIOHandle->pinConfig.pinSpeed << (2 * pGPIOHandle->pinConfig.pinNumber));
+	// configure the speed
 	pGPIOHandle->pGPIOx->OSPEEDR &= ~(0x3 << (2 * pGPIOHandle->pinConfig.pinNumber));
-	pGPIOHandle->pGPIOx->OSPEEDR |= temp;
+	pGPIOHandle->pGPIOx->OSPEEDR |= pGPIOHandle->pinConfig.pinSpeed << (2 * pGPIOHandle->pinConfig.pinNumber);
 
-	//3. configure the pupd settings
-	temp = (pGPIOHandle->pinConfig.pinPuPdControl << (2 * pGPIOHandle->pinConfig.pinNumber));
+	// configure the pupd settings
 	pGPIOHandle->pGPIOx->PUPDR &= ~(0x3 << (2 * pGPIOHandle->pinConfig.pinNumber));
-	pGPIOHandle->pGPIOx->PUPDR |= temp;
+	pGPIOHandle->pGPIOx->PUPDR |= pGPIOHandle->pinConfig.pinPuPdControl << (2 * pGPIOHandle->pinConfig.pinNumber);
 
-	//4. configure the optype
-	temp = (pGPIOHandle->pinConfig.pinOPType << pGPIOHandle->pinConfig.pinNumber);
-	pGPIOHandle->pGPIOx->OTYPER &= ~(0x1 << pGPIOHandle->pinConfig.pinNumber);
-	pGPIOHandle->pGPIOx->OTYPER |= temp;
+	// configure the optype
+	REG_CLEAR_BIT(pGPIOHandle->pGPIOx->OTYPER, pGPIOHandle->pinConfig.pinNumber);
+	pGPIOHandle->pGPIOx->OTYPER |= pGPIOHandle->pinConfig.pinOPType << pGPIOHandle->pinConfig.pinNumber;
 
-	//5. configure the alt functionality
+	// configure the alt functionality
 	if (pGPIOHandle->pinConfig.pinMode == GPIO_MODE_ALTFN)
 	{
 		uint8_t afrReg, regSection;
@@ -164,11 +158,11 @@ void GPIO_WriteToOutputPin(GPIO_RegDef_t *pGPIOx, uint8_t pinNumber, uint8_t val
 {
 	if (value == SET)
 	{
-		pGPIOx->ODR |= (1 << pinNumber);
+		REG_SET_BIT(pGPIOx->ODR, pinNumber);
 	}
 	else
 	{
-		pGPIOx->ODR &= ~(1 << pinNumber);
+		REG_CLEAR_BIT(pGPIOx->ODR, pinNumber);
 	}
 }
 
@@ -179,69 +173,39 @@ void GPIO_WriteToOutputPort(GPIO_RegDef_t *pGPIOx, uint16_t value)
 
 void GPIO_ToggleOutputPin(GPIO_RegDef_t *pGPIOx, uint8_t pinNumber)
 {
-	pGPIOx->ODR  ^= (1 << pinNumber);
+	pGPIOx->ODR ^= (1 << pinNumber);
 }
 
-// void GPIO_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnorDi)
-// {
+void GPIO_IrqInterruptConfig(uint8_t irqNumber, uint8_t en)
+{
 
-// 	if (EnorDi == ENABLE)
-// 	{
-// 		if (IRQNumber <= 31)
-// 		{
-// 			//program ISER0 register
-// 			*NVIC_ISER0 |= (1 << IRQNumber );
+	if (en == ENABLE)
+	{
+		REG_SET_BIT(*NVIC_ISER, irqNumber);
+	}
+	else
+	{
+		REG_SET_BIT(*NVIC_ICER, irqNumber);
+	}
 
-// 		}
-// 		else if (IRQNumber > 31 && IRQNumber < 64 ) //32 to 63
-// 		{
-// 			//program ISER1 register
-// 			*NVIC_ISER1 |= (1 << (IRQNumber % 32) );
-// 		}
-// 		else if (IRQNumber >= 64 && IRQNumber < 96 )
-// 		{
-// 			//program ISER2 register //64 to 95
-// 			*NVIC_ISER2 |= (1 << (IRQNumber % 64) );
-// 		}
-// 	}
-// 	else
-// 	{
-// 		if (IRQNumber <= 31)
-// 		{
-// 			//program ICER0 register
-// 			*NVIC_ICER0 |= (1 << IRQNumber );
-// 		}
-// 		else if (IRQNumber > 31 && IRQNumber < 64 )
-// 		{
-// 			//program ICER1 register
-// 			*NVIC_ICER1 |= (1 << (IRQNumber % 32) );
-// 		}
-// 		else if (IRQNumber >= 64 && IRQNumber < 96 )
-// 		{
-// 			//program ICER2 register
-// 			*NVIC_ICER2 |= (1 << (IRQNumber % 64) );
-// 		}
-// 	}
+}
 
-// }
+void GPIO_IrqPriorityConfig(uint8_t irqNumber, uint32_t irqPriority)
+{
+	// find out the ipr register
+	uint8_t iprx = irqNumber / 4;
+	uint8_t iprxSection = irqNumber % 4;
 
-// void GPIO_IRQPriorityConfig(uint8_t IRQNumber,uint32_t IRQPriority)
-// {
-// 	//1. first lets find out the ipr register
-// 	uint8_t iprx = IRQNumber / 4;
-// 	uint8_t iprx_section  = IRQNumber %4 ;
+	uint8_t shiftAmount = (8 * iprxSection) + (8 - NO_PR_BITS_IMPLEMENTED);
 
-// 	uint8_t shift_amount = (8 * iprx_section) + (8 - NO_PR_BITS_IMPLEMENTED) ;
+	*(NVIC_PR + iprx) |= (irqPriority << shiftAmount);
+}
 
-// 	*( NVIC_PR_BASE_ADDR + iprx ) |=  (IRQPriority << shift_amount );
-// }
-
-// void GPIO_IRQHandling(uint8_t pinNumber)
-// {
-// 	//clear the exti pr register corresponding to the pin number
-// 	if (EXTI->PR & (1 << pinNumber))
-// 	{
-// 		//clear
-// 		EXTI->PR |= (1 << pinNumber);
-// 	}
-// }
+void GPIO_IrqHandling(uint8_t pinNumber)
+{
+	//clear the exti pr register corresponding to the pin number
+	if (EXTI->PR & (1 << pinNumber))
+	{
+		REG_SET_BIT(EXTI->PR, pinNumber);
+	}
+}

@@ -7,7 +7,6 @@
 
 
 #include "stm32l07xx.h"
-#include "stm32l07xx_gpio_driver.h"
 
 #define HIGH 1
 #define LOW 0
