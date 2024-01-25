@@ -47,7 +47,7 @@ int main(void)
 	GPIO_Init(&gpioBtn);
 
 	GPIO_WriteToOutputPin(GPIOA, GPIO_PIN_NO_5, RESET);
-	//IRQ configurations
+	// IRQ configurations
 	GPIO_IrqPriorityConfig(IRQ_NO_EXTI15_4, NVIC_IRQ_PRI0);
 	GPIO_IrqInterruptConfig(IRQ_NO_EXTI15_4, ENABLE);
 
