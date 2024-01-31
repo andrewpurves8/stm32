@@ -165,7 +165,7 @@ void SPI_PeripheralControl(SPI_RegDef_t *pSPIx, uint8_t en)
 	}
 }
 
-void  SPI_SSIConfig(SPI_RegDef_t *pSPIx, uint8_t en)
+void  SPI_SsiConfig(SPI_RegDef_t *pSPIx, uint8_t en)
 {
 	if (en == ENABLE)
 	{
@@ -177,7 +177,7 @@ void  SPI_SSIConfig(SPI_RegDef_t *pSPIx, uint8_t en)
 	}
 }
 
-void  SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t en)
+void  SPI_SsoeConfig(SPI_RegDef_t *pSPIx, uint8_t en)
 {
 	if (en == ENABLE)
 	{
@@ -189,7 +189,7 @@ void  SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t en)
 	}
 }
 
-void SPI_IRQInterruptConfig(uint8_t irqNumber, uint8_t en)
+void SPI_IrqInterruptConfig(uint8_t irqNumber, uint8_t en)
 {
 	if (en == ENABLE)
 	{
@@ -201,7 +201,7 @@ void SPI_IRQInterruptConfig(uint8_t irqNumber, uint8_t en)
 	}
 }
 
-void SPI_IRQPriorityConfig(uint8_t irqNumber, uint32_t irqPriority)
+void SPI_IrqPriorityConfig(uint8_t irqNumber, uint32_t irqPriority)
 {
 	// first lets find out the ipr register
 	uint8_t iprx = irqNumber / 4;
@@ -252,7 +252,7 @@ uint8_t SPI_ReceiveDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t
 	return state;
 }
 
-void SPI_IRQHandling(SPI_Handle_t *pHandle)
+void SPI_IrqHandling(SPI_Handle_t *pHandle)
 {
 	uint8_t temp1, temp2;
 	// first lets check for TXE
@@ -361,7 +361,6 @@ static void spi_ovr_err_interrupt_handle(SPI_Handle_t *pSPIHandle)
 
 }
 
-
 void SPI_CloseTransmisson(SPI_Handle_t *pSPIHandle)
 {
 	REG_CLEAR_BIT(pSPIHandle->pSPIx->CR2, SPI_CR2_TXEIE);
@@ -386,7 +385,7 @@ void SPI_ClearOVRFlag(SPI_RegDef_t *pSPIx)
 	(void) temp;
 }
 
-__weak void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle,uint8_t AppEv)
+__weak void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle, uint8_t appEv)
 {
-	//This is a weak implementation . the user application may override this function.
+	// this is a weak implementation - the user application may override this function
 }

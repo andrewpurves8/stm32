@@ -235,12 +235,14 @@ typedef struct
 
 #define I2C1  									((I2C_RegDef_t*) I2C1_BASEADDR)
 #define I2C2  									((I2C_RegDef_t*) I2C2_BASEADDR)
+#define I2C3  									((I2C_RegDef_t*) I2C3_BASEADDR)
 
 #define USART1  								((USART_RegDef_t*) USART1_BASEADDR)
 #define USART2  								((USART_RegDef_t*) USART2_BASEADDR)
 
 #define REG_SET_BIT(REG, BIT)					(REG |= (1 << (BIT)))
 #define REG_CLEAR_BIT(REG, BIT)					(REG &= ~(1 << (BIT)))
+#define REG_TEST_BIT(REG, BIT)					(REG & (1 << (BIT)))
 
 /*
  * Clock Enable Macros for GPIOx peripherals
@@ -404,65 +406,59 @@ typedef struct
 #define SPI_SR_FRE						 		8
 
 /******************************************************************************************
- *Bit position definitions of I2C peripheral
+ * Bit position definitions of I2C peripheral
  ******************************************************************************************/
 /*
  * Bit position definitions I2C_CR1
  */
-//#define I2C_CR1_PE							0
-//#define I2C_CR1_NOSTRETCH  					7
-//#define I2C_CR1_START 						8
-//#define I2C_CR1_STOP  				 		9
-//#define I2C_CR1_ACK 				 			10
-//#define I2C_CR1_SWRST  				 		15
+#define I2C_CR1_PE								0
+#define I2C_CR1_TXIE							1
+#define I2C_CR1_DNF								8
 
 /*
  * Bit position definitions I2C_CR2
  */
-//#define I2C_CR2_FREQ				 			0
-//#define I2C_CR2_ITERREN				 		8
-//#define I2C_CR2_ITEVTEN				 		9
-//#define I2C_CR2_ITBUFEN 			    		10
+#define I2C_CR2_ADD0    				 		0
+#define I2C_CR2_ADD71 				 	 		1
+#define I2C_CR2_ADD98  			 	 			8
+#define I2C_CR2_RDWRN 							10
+#define I2C_CR2_ADD10  			 	 			11
+#define I2C_CR2_START 							13
+#define I2C_CR2_STOP  				 			14
+#define I2C_CR2_NBYTES 							16
+
+/*
+ * Bit position definitions I2C_TIMINGR
+ */
+#define I2C_TIMINGR_SCLL						0
+#define I2C_TIMINGR_SCLH						8
+#define I2C_TIMINGR_SDADEL						16
+#define I2C_TIMINGR_SCLDEL						20
+#define I2C_TIMINGR_PRESC						28
 
 /*
  * Bit position definitions I2C_OAR1
  */
-//#define I2C_OAR1_ADD0    				 		0
-//#define I2C_OAR1_ADD71 				 	 	1
-//#define I2C_OAR1_ADD98  			 	 		8
-//#define I2C_OAR1_ADDMODE   			 		15
+#define I2C_OAR1_ADD0    				 		0
+#define I2C_OAR1_ADD71 				 	 		1
+#define I2C_OAR1_ADD98  			 	 		8
+#define I2C_OAR1_EN		   			 			15
 
 /*
- * Bit position definitions I2C_SR1
+ * Bit position definitions I2C_ISR
  */
-//#define I2C_SR1_SB 					 		0
-//#define I2C_SR1_ADDR 				 			1
-//#define I2C_SR1_BTF 							2
-//#define I2C_SR1_ADD10 						3
-//#define I2C_SR1_STOPF 						4
-//#define I2C_SR1_RXNE 							6
-//#define I2C_SR1_TXE 							7
-//#define I2C_SR1_BERR 							8
-//#define I2C_SR1_ARLO 							9
-//#define I2C_SR1_AF 					 		10
-//#define I2C_SR1_OVR 							11
-//#define I2C_SR1_TIMEOUT 						14
+#define I2C_ISR_TXE   			 				0
+#define I2C_ISR_TXIS   			 				1
+#define I2C_ISR_RXNE   			 				2
+#define I2C_ISR_ADDR   			 				3
+#define I2C_ISR_TC   			 				6
+#define I2C_ISR_BUSY   			 				15
 
 /*
- * Bit position definitions I2C_SR2
+ * Bit position definitions I2C_ICR
  */
-//#define I2C_SR2_MSL							0
-//#define I2C_SR2_BUSY 							1
-//#define I2C_SR2_TRA 							2
-//#define I2C_SR2_GENCALL 						4
-//#define I2C_SR2_DUALF 						7
-
-/*
- * Bit position definitions I2C_CCR
- */
-//#define I2C_CCR_CCR 					 		0
-//#define I2C_CCR_DUTY 							14
-//#define I2C_CCR_FS  				 			15
+#define I2C_ICR_ADDRCF 			 				3
+#define I2C_ICR_STOPCF 			 				5
 
 /******************************************************************************************
  *Bit position definitions of USART peripheral
@@ -531,5 +527,6 @@ typedef struct
 
 #include "stm32l07xx_gpio_driver.h"
 #include "stm32l07xx_spi_driver.h"
+#include "stm32l07xx_i2c_driver.h"
 
 #endif /* STM32L07XX_H_ */

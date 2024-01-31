@@ -65,7 +65,6 @@ void GPIO_PeriClockControl(GPIO_RegDef_t *pGPIOx, uint8_t en)
 	}
 }
 
-
 void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 {
 	// enable the peripheral clock
@@ -105,7 +104,7 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 		}
 
 		// configure the GPIO port selection in SYSCFG_EXTICR
-		uint8_t extix = pGPIOHandle->pinConfig.pinNumber / 4 ;
+		uint8_t extix = pGPIOHandle->pinConfig.pinNumber / 4;
 		uint8_t extixSecion = pGPIOHandle->pinConfig.pinNumber % 4;
 		uint8_t portCode = GPIO_BASEADDR_TO_CODE(pGPIOHandle->pGPIOx);
 		SYSCFG_PCLK_EN();
@@ -127,7 +126,6 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 	REG_CLEAR_BIT(pGPIOHandle->pGPIOx->OTYPER, pGPIOHandle->pinConfig.pinNumber);
 	pGPIOHandle->pGPIOx->OTYPER |= pGPIOHandle->pinConfig.pinOPType << pGPIOHandle->pinConfig.pinNumber;
 
-	// configure the alt functionality
 	if (pGPIOHandle->pinConfig.pinMode == GPIO_MODE_ALTFN)
 	{
 		uint8_t afrReg, regSection;

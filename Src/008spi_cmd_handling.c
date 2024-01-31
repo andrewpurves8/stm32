@@ -146,7 +146,7 @@ int main(void)
 	* i.e when SPE=1, NSS will be pulled to low
 	* and NSS pin will be high when SPE=0
 	*/
-	SPI_SSOEConfig(SPI2, ENABLE);
+	SPI_SsoeConfig(SPI2, ENABLE);
 
 	while (1)
 	{
