@@ -71,7 +71,6 @@ int main(void)
 	{
 		delay();
 
-		// I2C_MasterSendData(&i2c3Handle, &sendData, 3, SLAVE_ADDR);
 		uint8_t data = 0x51;
 		I2C_MasterSendData(&i2c3Handle, &data, 1, SLAVE_ADDR);
 		I2C_MasterReceiveData(&i2c3Handle, &len, 1, SLAVE_ADDR);

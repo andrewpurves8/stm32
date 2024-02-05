@@ -338,10 +338,11 @@ typedef struct
 #define IRQ_NO_EXTI1_0 							5
 #define IRQ_NO_EXTI3_2 							6
 #define IRQ_NO_EXTI15_4 						7
+#define IRQ_NO_I2C3     						21
+#define IRQ_NO_I2C1     						23
+#define IRQ_NO_I2C2     						24
 #define IRQ_NO_SPI1								25
 #define IRQ_NO_SPI2         					26
-// #define IRQ_NO_I2C1_EV     						31
-// #define IRQ_NO_I2C1_ER     						32
 #define IRQ_NO_USART1	    					27
 #define IRQ_NO_USART2	    					28
 
@@ -355,10 +356,12 @@ typedef struct
 
 //some generic macros
 
-#define ENABLE 									1
-#define DISABLE 								0
-#define SET 									ENABLE
-#define RESET 									DISABLE
+#define TRUE 									1
+#define FALSE	 								0
+#define ENABLE 									TRUE
+#define DISABLE 								FALSE
+#define SET 									TRUE
+#define RESET 									FALSE
 
 /******************************************************************************************
  *Bit position definitions of SPI peripheral
@@ -413,6 +416,12 @@ typedef struct
  */
 #define I2C_CR1_PE								0
 #define I2C_CR1_TXIE							1
+#define I2C_CR1_RXIE							2
+#define I2C_CR1_ADDRIE							3
+#define I2C_CR1_NACKIE							4
+#define I2C_CR1_STOPIE							5
+#define I2C_CR1_TCIE							6
+#define I2C_CR1_ERRIE							7
 #define I2C_CR1_DNF								8
 
 /*
@@ -451,14 +460,25 @@ typedef struct
 #define I2C_ISR_TXIS   			 				1
 #define I2C_ISR_RXNE   			 				2
 #define I2C_ISR_ADDR   			 				3
+#define I2C_ISR_NACKF  			 				4
+#define I2C_ISR_STOPF  			 				5
 #define I2C_ISR_TC   			 				6
+#define I2C_ISR_BERR   			 				8
+#define I2C_ISR_ARLO   			 				9
+#define I2C_ISR_OVR   			 				10
+#define I2C_ISR_TIMEOUT			 				12
 #define I2C_ISR_BUSY   			 				15
 
 /*
  * Bit position definitions I2C_ICR
  */
 #define I2C_ICR_ADDRCF 			 				3
+#define I2C_ICR_NACKCF 			 				4
 #define I2C_ICR_STOPCF 			 				5
+#define I2C_ICR_BERRCF 			 				8
+#define I2C_ICR_ARLOCF 			 				9
+#define I2C_ICR_OVRCF 			 				10
+#define I2C_ICR_TIMEOUTCF		 				12
 
 /******************************************************************************************
  *Bit position definitions of USART peripheral
