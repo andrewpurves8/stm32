@@ -78,8 +78,8 @@ int main(void)
 	{
 		delay();
 
-		 commandCode = 0x51;
-		 while (I2C_MasterSendDataIT(&i2c3Handle, &commandCode, 1, SLAVE_ADDR) != I2C_READY);
+		commandCode = 0x51;
+		while (I2C_MasterSendDataIT(&i2c3Handle, &commandCode, 1, SLAVE_ADDR) != I2C_READY);
 		while (I2C_MasterReceiveDataIT(&i2c3Handle, &len, 1, SLAVE_ADDR) != I2C_READY);
 
 		commandCode = 0x52;

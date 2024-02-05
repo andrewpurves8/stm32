@@ -14,9 +14,6 @@ static void I2C_SetAddressWrite(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr);
 static void I2C_SetAddressRead(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr);
 static void I2C_ClearAddrFlag(I2C_RegDef_t *pI2Cx);
 static void I2C_SetNBytes(I2C_RegDef_t *pI2Cx, uint8_t nBytes);
-static void I2C_EnableWriteInterrupts(I2C_RegDef_t *pI2Cx);
-static void I2C_EnableReadInterrupts(I2C_RegDef_t *pI2Cx);
-static void I2C_DisableInterrupts(I2C_RegDef_t *pI2Cx);
 
 static void I2C_HandleRXNEInterrupt(I2C_Handle_t *pI2CHandle);
 static void I2C_HandleTXISInterrupt(I2C_Handle_t *pI2CHandle);
@@ -108,56 +105,10 @@ static void I2C_SetNBytes(I2C_RegDef_t *pI2Cx, uint8_t nBytes)
 	pI2Cx->CR2 |= nBytes << I2C_CR2_NBYTES;
 }
 
-static void I2C_EnableWriteInterrupts(I2C_RegDef_t *pI2Cx)
-{
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_TXIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_ADDRIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_NACKIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_STOPIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_TCIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_ERRIE);
-}
-
-static void I2C_EnableReadInterrupts(I2C_RegDef_t *pI2Cx)
-{
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_RXIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_ADDRIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_NACKIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_STOPIE);
-	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_ERRIE);
-}
-
-static void I2C_DisableInterrupts(I2C_RegDef_t *pI2Cx)
-{
-	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_TXIE);
-	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_RXIE);
-	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_ADDRIE);
-	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_NACKIE);
-	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_STOPIE);
-	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_TCIE);
-	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_ERRIE);
-}
-
 void I2C_GenerateStopCondition(I2C_RegDef_t *pI2Cx)
 {
 	REG_SET_BIT(pI2Cx->CR2, I2C_CR2_STOP);
 }
-
-// void I2C_SlaveEnableDisableCallbackEvents(I2C_RegDef_t *pI2Cx, uint8_t en)
-// {
-// 	if (en == ENABLE)
-// 	{
-// 		REG_SET_BIT(pI2Cx->CR2, I2C_CR2_ITEVTEN);
-// 		REG_SET_BIT(pI2Cx->CR2, I2C_CR2_ITBUFEN);
-// 		REG_SET_BIT(pI2Cx->CR2, I2C_CR2_ITERREN);
-// 	}
-// 	else
-// 	{
-// 		REG_CLEAR_BIT(pI2Cx->CR2, I2C_CR2_ITEVTEN);
-// 		REG_CLEAR_BIT(pI2Cx->CR2, I2C_CR2_ITBUFEN);
-// 		REG_CLEAR_BIT(pI2Cx->CR2, I2C_CR2_ITERREN);
-// 	}
-// }
 
 void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx, uint8_t en)
 {
@@ -356,6 +307,28 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint8_t
 	}
 }
 
+void I2C_EnableInterrupts(I2C_RegDef_t *pI2Cx)
+{
+	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_TXIE);
+	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_RXIE);
+	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_ADDRIE);
+	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_NACKIE);
+	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_STOPIE);
+	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_TCIE);
+	REG_SET_BIT(pI2Cx->CR1, I2C_CR1_ERRIE);
+}
+
+void I2C_DisableInterrupts(I2C_RegDef_t *pI2Cx)
+{
+	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_TXIE);
+	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_RXIE);
+	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_ADDRIE);
+	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_NACKIE);
+	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_STOPIE);
+	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_TCIE);
+	REG_CLEAR_BIT(pI2Cx->CR1, I2C_CR1_ERRIE);
+}
+
 void I2C_IrqInterruptConfig(uint8_t irqNumber, uint8_t en)
 {
 	if (en == ENABLE)
@@ -391,7 +364,7 @@ uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint3
 		pI2CHandle->devAddr = slaveAddr;
 		pI2CHandle->masterSlave = I2C_MASTER;
 
-		I2C_EnableWriteInterrupts(pI2CHandle->pI2Cx);
+		I2C_EnableInterrupts(pI2CHandle->pI2Cx);
 		I2C_SetAddressWrite(pI2CHandle->pI2Cx, slaveAddr);
 		I2C_SetNBytes(pI2CHandle->pI2Cx, len);
 		I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
@@ -413,7 +386,7 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, ui
 		pI2CHandle->devAddr = slaveAddr;
 		pI2CHandle->masterSlave = I2C_MASTER;
 
-		I2C_EnableReadInterrupts(pI2CHandle->pI2Cx);
+		I2C_EnableInterrupts(pI2CHandle->pI2Cx);
 		I2C_SetAddressRead(pI2CHandle->pI2Cx, slaveAddr);
 		I2C_SetNBytes(pI2CHandle->pI2Cx, len);
 		I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
