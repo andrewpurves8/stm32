@@ -514,6 +514,7 @@ static void I2C_HandleIrqEvents(I2C_Handle_t *pI2CHandle)
 		// STOF flag is set
 		// clear the STOPF
 		REG_SET_BIT(pI2CHandle->pI2Cx->ICR, I2C_ICR_STOPCF);
+		REG_SET_BIT(pI2CHandle->pI2Cx->ISR, I2C_ISR_TXE);
 
 		// notify the application that STOP is detected
 		I2C_ApplicationEventCallback(pI2CHandle, I2C_EV_STOP);

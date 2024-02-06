@@ -1,27 +1,25 @@
 /*
- * 012i2c_master_rx_testingIT.c
+ * 013i2c_slave_tx_string.c
  *
- *  Created on: Feb 2, 2024
+ *  Created on: Feb 5, 2024
  *      Author: andrew.purves
  */
+
 
 #include <stdio.h>
 #include <string.h>
 #include "stm32l07xx.h"
 
-// flag variable
-uint8_t rxComplt = RESET;
+#define SLAVE_ADDR  							0x69
+#define MY_ADDR 								SLAVE_ADDR
 
-#define MY_ADDR 0x61
-#define SLAVE_ADDR  0x68
+uint8_t txBuf[32] = "ABCD1234";
+I2C_Handle_t i2c3Handle;
 
 void delay(void)
 {
-	for (uint32_t i = 0 ; i < 250000; i++);
+	for (uint32_t i = 0; i < 250000; i++);
 }
-
-I2C_Handle_t i2c3Handle;
-uint8_t rcvBuf[32];
 
 /*
  * PC0-> SCL
@@ -59,42 +57,21 @@ void I2C3_Inits(void)
 
 int main(void)
 {
-	uint8_t commandCode, len;
-
 	// i2c pin inits
 	I2C3_GPIOInits();
 
 	// i2c peripheral configuration
 	I2C3_Inits();
 
-	// i2C IRQ configurations
+	// i2c IRQ configurations
 	I2C_IrqInterruptConfig(IRQ_NO_I2C3, ENABLE);
+	I2C_EnableInterrupts(I2C3);
 
 	// enable the i2c peripheral
 	I2C_PeripheralControl(I2C3, ENABLE);
 
-	while (1)
-	{
-		delay();
-
-		commandCode = 0x51;
-		while (I2C_MasterSendDataIT(&i2c3Handle, &commandCode, 1, SLAVE_ADDR) != I2C_READY);
-		while (I2C_MasterReceiveDataIT(&i2c3Handle, &len, 1, SLAVE_ADDR) != I2C_READY);
-
-		commandCode = 0x52;
-		while (I2C_MasterSendDataIT(&i2c3Handle, &commandCode, 1, SLAVE_ADDR) != I2C_READY);
-		while (I2C_MasterReceiveDataIT(&i2c3Handle, rcvBuf, len, SLAVE_ADDR) != I2C_READY);
-
-		rxComplt = RESET;
-
-		// wait till rx completes
-        while (rxComplt != SET);
-
-		rcvBuf[len + 1] = '\0';
-		rxComplt = RESET;
-	}
+	while (1);
 }
-
 
 void I2C3_IRQHandler(void)
 {
@@ -103,20 +80,39 @@ void I2C3_IRQHandler(void)
 
 void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle, uint8_t appEv)
 {
-	if (appEv == I2C_EV_RX_CMPLT)
+	static uint8_t commandCode = 0;
+	static uint8_t count = 0;
+
+	if (appEv == I2C_EV_DATA_REQ)
 	{
-		rxComplt = SET;
+		// master wants some data. slave has to send it
+		if (commandCode == 0x51)
+		{
+			// send the length information to the master
+			I2C_SlaveSendData(pI2CHandle->pI2Cx, strlen((char*) txBuf));
+		}
+		else if (commandCode == 0x52)
+		{
+			// send the contents of txBuf
+			I2C_SlaveSendData(pI2CHandle->pI2Cx, txBuf[count++]);
+		}
+	}
+	else if (appEv == I2C_EV_DATA_RCV)
+	{
+		// data is waiting for the slave to read
+		commandCode = I2C_SlaveReceiveData(pI2CHandle->pI2Cx);
 	}
 	else if (appEv == I2C_ERROR_NACK)
 	{
-		// in master ack failure happens when slave fails to send ack for the byte
-		// sent from the master.
-		I2C_CloseSendData(pI2CHandle);
-
-		// generate the stop condition to release the bus
-		I2C_GenerateStopCondition(I2C3);
-
-		// hang in infinite loop
-		while (1);
+		// this happens only during slave txing
+		// master has sent the NACK so slave should understand that master doesnt need
+		// more data
+		commandCode = 0xff;
+		count = 0;
+	}
+	else if (appEv == I2C_EV_STOP)
+	{
+		// this happens only during slave reception
+		// master has ended the I2C communication with the slave
 	}
 }
