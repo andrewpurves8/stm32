@@ -7,8 +7,6 @@
 
 #include "stm32l07xx_i2c_driver.h"
 
-static uint32_t RCC_GetPCLK1Value(void);
-
 static void I2C_GenerateStartCondition(I2C_RegDef_t *pI2Cx);
 static void I2C_SetAddressWrite(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr);
 static void I2C_SetAddressRead(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr);
@@ -20,59 +18,6 @@ static void I2C_HandleTXISInterrupt(I2C_Handle_t *pI2CHandle);
 
 static void I2C_HandleIrqEvents(I2C_Handle_t *pI2CHandle);
 static void I2C_HandleIrqErrors(I2C_Handle_t *pI2CHandle);
-
-static uint16_t AHB_PreScaler[8] = {2, 4, 8, 16, 64, 128, 256, 512};
-static uint8_t APB1_PreScaler[4] = {2, 4, 8, 16};
-
-static uint32_t RCC_GetPCLK1Value(void)
-{
-	uint32_t pclk1, systemClk;
-
-	uint8_t clkSrc, temp, ahbp, apb1p;
-
-	clkSrc = ((RCC->CFGR >> 2) & 0x3);
-
-	if (clkSrc == 0)
-	{
-		systemClk = 16000000;
-	}
-	else if (clkSrc == 1)
-	{
-		systemClk = 8000000;
-	}
-	else if (clkSrc == 2)
-	{
-		// systemClk = RCC_GetPLLOutputClock();
-		// TODO: calc PLL clock
-		systemClk = 0;
-	}
-
-	// ahb
-	temp = ((RCC->CFGR >> 4) & 0xF);
-	if (temp < 8)
-	{
-		ahbp = 1;
-	}
-	else
-	{
-		ahbp = AHB_PreScaler[temp - 8];
-	}
-
-	// apb1
-	temp = ((RCC->CFGR >> 10 ) & 0x7);
-	if (temp < 4)
-	{
-		apb1p = 1;
-	}
-	else
-	{
-		apb1p = APB1_PreScaler[temp - 4];
-	}
-
-	pclk1 = (systemClk / ahbp) / apb1p;
-
-	return pclk1;
-}
 
 static void I2C_GenerateStartCondition(I2C_RegDef_t *pI2Cx)
 {
