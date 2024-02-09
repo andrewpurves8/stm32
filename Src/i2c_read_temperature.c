@@ -22,6 +22,11 @@
 // sensor sends function code + number of bytes + requested data (TEMPERATURE_LEN) + CRC code
 #define DATA_LEN_RECEIVE						(3 + TEMPERATURE_LEN)
 
+void delayUs(uint32_t us)
+{
+	for (uint32_t i = 0; i < us; i++);
+}
+
 I2C_Handle_t i2c3Handle;
 
 // rcv buffer
@@ -64,6 +69,34 @@ void I2C3_Inits(void)
 int main(void)
 {
 	RCC_SetSysClk(SYS_CLK_HSI);
+	
+	GPIO_Handle_t i2cPins;
+
+	i2cPins.pGPIOx = GPIOB;
+	i2cPins.pinConfig.pinMode = GPIO_MODE_OUT;
+	i2cPins.pinConfig.pinOPType = GPIO_OP_TYPE_PP;
+	i2cPins.pinConfig.pinPuPdControl = GPIO_NO_PUPD;
+	i2cPins.pinConfig.pinSpeed = GPOI_SPEED_HIGH;
+	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_0;
+	GPIO_Init(&i2cPins);
+
+	volatile uint8_t i = 0x55;
+	GPIO_WriteToOutputPin(GPIOB, 0, 1);
+	// delayUs(1);
+	i ^= i;
+	GPIO_WriteToOutputPin(GPIOB, 0, 0);
+	i ^= i;
+	i ^= i;
+	i ^= i;
+	i ^= i;
+	i ^= i;
+	i ^= i;
+	i ^= i;
+	i ^= i;
+	i ^= i;
+	i ^= i;
+	// delayUs(10);
+	GPIO_WriteToOutputPin(GPIOB, 0, 1);
 
 	I2C3_GPIOInits();
 

@@ -301,7 +301,7 @@ uint8_t USART_SendDataIT(USART_Handle_t *pUSARTHandle, uint8_t *pTxBuffer, uint3
 		pUSARTHandle->txLen = len;
 		pUSARTHandle->pTxBuffer = pTxBuffer;
 		pUSARTHandle->txBusyState = USART_BUSY_IN_TX;
-
+		
 		// enable interrupt for TXE
 		REG_SET_BIT(pUSARTHandle->pUSARTx->CR1, USART_CR1_TXEIE);
 
@@ -321,8 +321,6 @@ uint8_t USART_ReceiveDataIT(USART_Handle_t *pUSARTHandle, uint8_t *pRxBuffer, ui
 		pUSARTHandle->rxLen = len;
 		pUSARTHandle->pRxBuffer = pRxBuffer;
 		pUSARTHandle->rxBusyState = USART_BUSY_IN_RX;
-
-		// (void) pUSARTHandle->pUSARTx->DR;
 
 		// enable interrupt for RXNE
 		REG_SET_BIT(pUSARTHandle->pUSARTx->CR1, USART_CR1_RXNEIE);
