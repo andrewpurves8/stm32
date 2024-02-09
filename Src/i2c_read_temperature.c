@@ -11,8 +11,8 @@
 
 #define MY_ADDR 								0x61
 
-//#define SLAVE_ADDR  							0xB8
-#define SLAVE_ADDR  							0x5C
+// datasheet specifies that 0xB8 should be sent for write, but address is expected to be the 7 MSBs
+#define SLAVE_ADDR		  						0x5C
 #define READ_COMMAND							0x03
 #define TEMPERATURE_ADDR						0x02
 #define TEMPERATURE_LEN							2
@@ -21,11 +21,6 @@
 #define DATA_LEN_SEND							3
 // sensor sends function code + number of bytes + requested data (TEMPERATURE_LEN) + CRC code
 #define DATA_LEN_RECEIVE						(3 + TEMPERATURE_LEN)
-
-void delay(void)
-{
-	for (uint32_t i = 0; i < 250000; i++);
-}
 
 I2C_Handle_t i2c3Handle;
 
@@ -68,19 +63,59 @@ void I2C3_Inits(void)
 
 int main(void)
 {
+	RCC_SetSysClk(SYS_CLK_HSI);
+
 	I2C3_GPIOInits();
 
 	// i2c peripheral configuration
 	I2C3_Inits();
 
+	// i2C IRQ configurations
+	I2C_IrqInterruptConfig(IRQ_NO_I2C3, ENABLE);
+
 	// enable the i2c peripheral
 	I2C_PeripheralControl(I2C3, ENABLE);
+	
+	// wake sensor
+	uint8_t dummyWrite = 0;
+	I2C_MasterSendDataIT(&i2c3Handle, &dummyWrite, 0, SLAVE_ADDR);
 
 	while (1)
 	{
-		delay();
+		delay(250);
 
-		I2C_MasterSendData(&i2c3Handle, &sendData, DATA_LEN_SEND, SLAVE_ADDR);
-		I2C_MasterReceiveData(&i2c3Handle, &rcvBuf, DATA_LEN_RECEIVE, SLAVE_ADDR);
+		I2C_MasterSendDataIT(&i2c3Handle, &sendData, DATA_LEN_SEND, SLAVE_ADDR);
+		I2C_MasterReceiveDataIT(&i2c3Handle, &rcvBuf, DATA_LEN_RECEIVE, SLAVE_ADDR);
+	}
+}
+
+void I2C3_IRQHandler(void)
+{
+	I2C_IrqHandling(&i2c3Handle);
+}
+
+void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle, uint8_t appEv)
+{
+	// sensor NACKs the first time after being woken up, so allow one NACK
+	static uint8_t nackCount = 0;
+	if (appEv == I2C_EV_RX_CMPLT)
+	{
+		
+	}
+	else if (appEv == I2C_ERROR_NACK)
+	{
+		if (nackCount > 0)
+		{
+			// in master ack failure happens when slave fails to send ack for the byte
+			// sent from the master.
+			I2C_CloseSendData(pI2CHandle);
+
+			// generate the stop condition to release the bus
+			I2C_GenerateStopCondition(I2C3);
+
+			// hang in infinite loop
+			while (1);
+		}
+		nackCount++;
 	}
 }

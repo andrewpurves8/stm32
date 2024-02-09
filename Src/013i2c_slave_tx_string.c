@@ -16,11 +16,6 @@
 uint8_t txBuf[32] = "ABCD1234";
 I2C_Handle_t i2c3Handle;
 
-void delay(void)
-{
-	for (uint32_t i = 0; i < 250000; i++);
-}
-
 /*
  * PC0-> SCL
  * PC1 -> SDA
@@ -57,6 +52,8 @@ void I2C3_Inits(void)
 
 int main(void)
 {
+	RCC_SetSysClk(SYS_CLK_HSI);
+
 	// i2c pin inits
 	I2C3_GPIOInits();
 

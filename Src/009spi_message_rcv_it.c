@@ -30,11 +30,6 @@ volatile uint8_t rcvStop = 0;
 /* this flag will be set in the interrupt handler of the Arduino interrupt GPIO */
 volatile uint8_t dataAvailable = 0;
 
-void delay(void)
-{
-	for(uint32_t i = 0; i < 250000; i++);
-}
-
 /*
  * PB14 --> SPI2_MISO
  * PB15 --> SPI2_MOSI
@@ -42,7 +37,6 @@ void delay(void)
  * PB12 --> SPI2_NSS
  * ALT function mode : 5
  */
-
 void SPI2_GPIOInits(void)
 {
 	GPIO_Handle_t spiPins;
@@ -108,6 +102,8 @@ void Slave_GPIO_InterruptPinInit(void)
 int main(void)
 {
 	uint8_t dummy = 0xFF;
+
+	RCC_SetSysClk(SYS_CLK_HSI);
 
 	Slave_GPIO_InterruptPinInit();
 
@@ -181,7 +177,6 @@ void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle, uint8_t appEv)
 			i = 0;
 		}
 	}
-
 }
 
 /* slave data available interrupt handler */

@@ -12,12 +12,6 @@
 #define LOW 0
 #define BTN_PRESSED LOW
 
-void delay(void)
-{
-	for (uint32_t i = 0; i < 250000 ; i++);
-}
-
-
 int main(void)
 {
 	GPIO_Handle_t gpioLed, gpioBtn;
@@ -46,7 +40,7 @@ int main(void)
 		if (GPIO_ReadFromInputPin(GPIOC, GPIO_PIN_NO_13) == BTN_PRESSED)
 		{
 			GPIO_ToggleOutputPin(GPIOA, GPIO_PIN_NO_5);
-			delay();
+			delay(250);
 		}
 	}
 	return 0;

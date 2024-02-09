@@ -7,64 +7,6 @@
 
 #include "stm32l07xx_usart_driver.h"
 
-// void USART_SetBaudRate(USART_RegDef_t *pUSARTx, uint32_t baudRate)
-// {
-// 	uint32_t pClkx, usartDiv;
-
-// 	// variables to hold Mantissa and Fraction values
-// 	uint32_t mantissa, fraction;
-
-//   	uint32_t tempReg = 0;
-
-// 	// get the value of APB bus clock in to the variable pClkx
-// 	if (pUSARTx == USART1)
-// 	{
-// 		// USART1 is hanging on APB2 bus
-// 		pClkx = RCC_GetPCLK2Value();
-// 	}
-// 	else
-// 	{
-// 		pClkx = RCC_GetPCLK1Value();
-// 	}
-
-// 	// check for OVER8 configuration bit
-// 	if (REG_TEST_BIT(pUSARTx->CR1, USART_CR1_OVER8))
-// 	{
-// 		// OVER8 = 1, over sampling by 8
-// 		usartDiv = ((25 * pClkx) / (2 * baudRate));
-// 	}
-// 	else
-// 	{
-// 		// over sampling by 16
-// 		usartDiv = ((25 * pClkx) / (4 * baudRate));
-// 	}
-
-// 	// calculate the Mantissa part
-// 	mantissa = usartDiv / 100;
-
-// 	// place the Mantissa part in appropriate bit position
-// 	tempReg |= mantissa << 4;
-
-// 	// extract the fraction part
-// 	fraction = usartDiv - (mantissa * 100);
-
-// 	// calculate the final fractional
-// 	if (REG_TEST_BIT(pUSARTx->CR1, USART_CR1_OVER8))
-// 	{
-// 		// OVER8 = 1, over sampling by 8
-// 		fraction = (((fraction * 8) + 50) / 100) & ((uint8_t) 0x07);
-// 	}
-// 	else
-// 	{
-// 		// over sampling by 16
-// 		fraction = (((fraction * 16) + 50) / 100) & ((uint8_t) 0x0F);
-// 	}
-
-// 	// place the fractional part in appropriate bit position
-// 	tempReg |= fraction;
-// 	pUSARTx->BRR = tempReg;
-// }
-
 void USART_SetBaudRate(USART_RegDef_t *pUSARTx, uint32_t baudRate)
 {
 	uint32_t pClkx, usartDiv;
@@ -85,15 +27,15 @@ void USART_SetBaudRate(USART_RegDef_t *pUSARTx, uint32_t baudRate)
 	if (REG_TEST_BIT(pUSARTx->CR1, USART_CR1_OVER8))
 	{
 		// OVER8 = 1, over sampling by 8
-		usartDiv = 2 * pClkx / baudRate;
-		uint32_t brr3_0 = (usartDiv & 0xF) >> 1;
+		usartDiv = (2 * pClkx + baudRate / 2) / baudRate;
 		usartDiv &= ~(0xF);
+		uint32_t brr3_0 = (usartDiv & 0xF) >> 1;
 		usartDiv |= brr3_0;
 	}
 	else
 	{
 		// over sampling by 16
-		usartDiv = pClkx / baudRate;
+		usartDiv = (pClkx + baudRate / 2) / baudRate;
 		tempReg = usartDiv;
 	}
 

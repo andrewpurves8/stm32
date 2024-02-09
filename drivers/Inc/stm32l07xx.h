@@ -370,7 +370,7 @@ typedef struct
 #define RESET 									FALSE
 
 /******************************************************************************************
- *Bit position definitions of SPI peripheral
+ * Bit position definitions of SPI peripheral
  ******************************************************************************************/
 /*
  * Bit position definitions SPI_CR1
@@ -487,7 +487,7 @@ typedef struct
 #define I2C_ICR_TIMEOUTCF		 				12
 
 /******************************************************************************************
- *Bit position definitions of USART peripheral
+ * Bit position definitions of USART peripheral
  ******************************************************************************************/
 
 /*
@@ -565,6 +565,29 @@ typedef struct
 #define USART_ICR_CTSCF       					9
 #define USART_ICR_RTOCF       					11
 #define USART_ICR_EOBCF       					12
+
+/******************************************************************************************
+ * Bit position definitions of RCC peripheral
+ ******************************************************************************************/
+
+/*
+ * Bit position definitions RCC_CR
+ */
+#define RCC_CR_HSI16ON							0
+#define RCC_CR_MSION							8
+#define RCC_CR_HSEON							16
+#define RCC_CR_PLLON							24
+
+/*
+ * Bit position definitions RCC_CFGR
+ */
+#define RCC_CFGR_SW								0
+#define RCC_CFGR_SWS							2
+#define RCC_CFGR_HPRE							4
+#define RCC_CFGR_PPRE1							8
+#define RCC_CFGR_PPRE2							11
+
+void delay(uint32_t ms);
 
 #include "stm32l07xx_gpio_driver.h"
 #include "stm32l07xx_spi_driver.h"

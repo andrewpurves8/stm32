@@ -62,6 +62,8 @@ int main(void)
 {
 	dataLen = strlen((char*) txBuf);
 
+	RCC_SetSysClk(SYS_CLK_HSI);
+
 	// i2c pin inits
 	I2C3_GPIOInits();
 

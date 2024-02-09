@@ -15,11 +15,6 @@ uint8_t rxComplt = RESET;
 #define MY_ADDR 0x61
 #define SLAVE_ADDR  0x68
 
-void delay(void)
-{
-	for (uint32_t i = 0 ; i < 250000; i++);
-}
-
 I2C_Handle_t i2c3Handle;
 uint8_t rcvBuf[32];
 
@@ -61,6 +56,8 @@ int main(void)
 {
 	uint8_t commandCode, len;
 
+	RCC_SetSysClk(SYS_CLK_HSI);
+
 	// i2c pin inits
 	I2C3_GPIOInits();
 
@@ -75,7 +72,7 @@ int main(void)
 
 	while (1)
 	{
-		delay();
+		delay(250);
 
 		commandCode = 0x51;
 		while (I2C_MasterSendDataIT(&i2c3Handle, &commandCode, 1, SLAVE_ADDR) != I2C_READY);
@@ -94,7 +91,6 @@ int main(void)
 		rxComplt = RESET;
 	}
 }
-
 
 void I2C3_IRQHandler(void)
 {

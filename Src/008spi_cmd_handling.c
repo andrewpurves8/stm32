@@ -9,8 +9,6 @@
 #include <string.h>
 #include "stm32l07xx.h"
 
-// extern void initialise_monitor_handles();
-
 // command codes
 #define COMMAND_LED_CTRL      		0x50
 #define COMMAND_SENSOR_READ      	0x51
@@ -43,7 +41,6 @@ void delay(void)
  * PB12 --> SPI2_NSS
  * ALT function mode : 5
  */
-
 void SPI2_GPIOInits(void)
 {
 	GPIO_Handle_t spiPins;
@@ -111,7 +108,6 @@ void GPIO_ButtonInit(void)
 
 uint8_t SPI_VerifyResponse(uint8_t ackbyte)
 {
-
 	if (ackbyte == (uint8_t) 0xF5)
 	{
 		// ack
@@ -126,9 +122,7 @@ int main(void)
 	uint8_t dummyWrite = 0xff;
 	uint8_t dummyRead;
 
-	// initialise_monitor_handles();
-
-	printf("Application is running\n");
+	RCC_SetSysClk(SYS_CLK_HSI);
 
 	GPIO_ButtonInit();
 
@@ -137,8 +131,6 @@ int main(void)
 
 	// this function is used to initialize the SPI2 peripheral parameters
 	SPI2_Inits();
-
-	printf("SPI Init. done\n");
 
 	/*
 	* making SSOE 1 does NSS output enable.
@@ -153,8 +145,7 @@ int main(void)
 		// wait till button is pressed
 		while (!GPIO_ReadFromInputPin(GPIOA, GPIO_PIN_NO_0));
 
-		// to avoid button de-bouncing related issues 200ms of delay
-		delay();
+		delay(250);
 
 		// enable the SPI2 peripheral
 		SPI_PeripheralControl(SPI2, ENABLE);
@@ -196,7 +187,7 @@ int main(void)
 		while (!GPIO_ReadFromInputPin(GPIOA, GPIO_PIN_NO_0));
 
 		// to avoid button de-bouncing related issues 200ms of delay
-		delay();
+		delay(250);
 
 		commandCode = COMMAND_SENSOR_READ;
 
@@ -224,7 +215,7 @@ int main(void)
 			SPI_ReceiveData(SPI2, &dummyRead, 1);
 
 			// insert some delay so that slave can ready with the data
-			delay();
+			delay(250);
 
 			// send some dummy bits (1 byte) fetch the response from the slave
 			SPI_SendData(SPI2, &dummyWrite, 1);
@@ -239,8 +230,7 @@ int main(void)
 		// wait till button is pressed
 		while (!GPIO_ReadFromInputPin(GPIOA, GPIO_PIN_NO_0));
 
-		// to avoid button de-bouncing related issues 200ms of delay
-		delay();
+		delay(250);
 
 		commandCode = COMMAND_LED_READ;
 
@@ -267,7 +257,7 @@ int main(void)
 			SPI_ReceiveData(SPI2, &dummyRead, 1);
 
 			// insert some delay so that slave can ready with the data
-			delay();
+			delay(250);
 
 			// send some dummy bits (1 byte) fetch the response from the slave
 			SPI_SendData(SPI2, &dummyWrite, 1);
@@ -282,8 +272,7 @@ int main(void)
 		// wait till button is pressed
 		while (!GPIO_ReadFromInputPin(GPIOA, GPIO_PIN_NO_0));
 
-		// to avoid button de-bouncing related issues 200ms of delay
-		delay();
+		delay(250);
 
 		commandCode = COMMAND_PRINT;
 
@@ -310,7 +299,7 @@ int main(void)
 			// do dummy read to clear off the RXNE
 			SPI_ReceiveData(SPI2, &dummyRead, 1);
 
-			delay();
+			delay(250);
 
 			// send message
 			for (int i = 0; i < args[0]; i++) {
@@ -325,8 +314,7 @@ int main(void)
 		// wait till button is pressed
 		while (!GPIO_ReadFromInputPin(GPIOA, GPIO_PIN_NO_0));
 
-		// to avoid button de-bouncing related issues 200ms of delay
-		delay();
+		delay(250);
 
 		commandCode = COMMAND_ID_READ;
 

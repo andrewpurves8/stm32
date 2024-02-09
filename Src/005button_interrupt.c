@@ -12,12 +12,6 @@
 #define LOW 0
 #define BTN_PRESSED LOW
 
-void delay(void)
-{
-	// this will introduce ~200ms delay when system clock is 16MHz
-	for(uint32_t i = 0; i < 250000; i++);
-}
-
 int main(void)
 {
 	GPIO_Handle_t gpioLed, gpioBtn;
@@ -59,5 +53,5 @@ void EXTI4_15_IRQHandler(void)
 {
 	GPIO_IrqHandling(GPIO_PIN_NO_13); // clear the pending event from exti line
 	GPIO_ToggleOutputPin(GPIOA, GPIO_PIN_NO_5);
-   	delay(); // debouncing
+	delay(250);
 }

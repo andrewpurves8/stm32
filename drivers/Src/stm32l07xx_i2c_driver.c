@@ -334,6 +334,7 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, ui
 		I2C_EnableInterrupts(pI2CHandle->pI2Cx);
 		I2C_SetAddressRead(pI2CHandle->pI2Cx, slaveAddr);
 		I2C_SetNBytes(pI2CHandle->pI2Cx, len);
+		pI2CHandle->pI2Cx->CR2 |= (1 << 24);
 		I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
 	}
 

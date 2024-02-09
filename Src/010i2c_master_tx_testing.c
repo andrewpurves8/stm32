@@ -12,11 +12,6 @@
 #define MY_ADDR 								0x61
 #define SLAVE_ADDR  							0x68
 
-void delay(void)
-{
-	for (uint32_t i = 0; i < 250000; i++);
-}
-
 I2C_Handle_t i2c3Handle;
 
 /*
@@ -54,18 +49,20 @@ void I2C3_Inits(void)
 
 int main(void)
 {
+	RCC_SetSysClk(SYS_CLK_HSI);
+
 	// i2c pin inits
-	 I2C3_GPIOInits();
+	I2C3_GPIOInits();
 
 	// i2c peripheral configuration
-	 I2C3_Inits();
+	I2C3_Inits();
 
 	// enable the i2c peripheral
-	 I2C_PeripheralControl(I2C3, ENABLE);
+	I2C_PeripheralControl(I2C3, ENABLE);
 
 	while (1)
 	{
-		delay();
+		delay(250);
 
 		uint8_t data[3] = {'1', '2', '4'};
 		I2C_MasterSendData(&i2c3Handle, &data, 3, SLAVE_ADDR);
