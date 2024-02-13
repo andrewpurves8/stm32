@@ -7,6 +7,8 @@
 
 #include "ssd1306.h"
 #include "stm32l07xx.h"
+#include <string.h>
+#include "font.c"
 
 #define MY_ADDR 								0x61
 #define SLAVE_ADDR		  						0x3C
@@ -26,7 +28,6 @@
 #define SSD1306_DISPLAY_OFF                     0xAE
 #define SSD1306_DISPLAY_ON                      0xAF
 #define SSD1306_MEMORY_MODE                     0x20
-#define SSD1306_NORMAL_DISPLAY                  0xA6
 #define SSD1306_PAGE_ADDR                       0x22
 #define SSD1306_SET_COM_PINS                    0xDA
 #define SSD1306_SET_CONTRAST                    0x81
@@ -42,6 +43,8 @@ static void I2C3_GPIOInits(void);
 static void I2C3_Inits(void);
 static void SSD1306_SendCommand(uint8_t command);
 static void SSD1306_SendCommandList(uint8_t* commandList, uint8_t numBytes);
+static void SSD1306_PrintChar(char c, uint8_t x, uint8_t y, uint8_t fontSize);
+static void SSD1306_DrawRect(uint8_t x, uint8_t width, uint8_t y, uint8_t height);
 
 static I2C_Handle_t i2c3Handle;
 static uint8_t* buffer;
@@ -91,13 +94,44 @@ static void SSD1306_SendCommandList(uint8_t* commandList, uint8_t numBytes)
     I2C_MasterSendData(&i2c3Handle, commandList, numBytes, SLAVE_ADDR);
 }
 
-void SSD1306_Init(void)
+static void SSD1306_PrintChar(char c, uint8_t x, uint8_t y, uint8_t fontSize)
+{
+    for (int8_t i = 0; i < FONT_WIDTH; i++) {
+        uint8_t line = font[c * FONT_WIDTH + i];
+        for (int8_t j = 0; j < 8; j++, line >>= 1) {
+            if (line & 1)
+            {
+                if (fontSize == 1)
+                {
+                    SSD1306_DrawPixel(x + j, y + i, SSD1306_WHITE);
+                }
+                else
+                {
+                    SSD1306_DrawRect(x + j * fontSize, fontSize, y + i * fontSize, fontSize);
+                }
+            }
+        }
+    }
+}
+
+static void SSD1306_DrawRect(uint8_t x, uint8_t width, uint8_t y, uint8_t height)
+{
+    for (uint8_t i = x; i < x + width; i++)
+    {
+        for (uint8_t j = y; j < y + height; j++)
+        {
+            SSD1306_DrawPixel(i, j, SSD1306_WHITE);
+        }
+    }
+}
+
+void SSD1306_Init(uint8_t displayMode)
 {
     I2C3_GPIOInits();
     I2C3_Inits();
 	I2C_PeripheralControl(I2C3, ENABLE);
     
-    static const uint8_t init[] = {
+    const uint8_t init[] = {
         SSD1306_COMMAND_CONTROL_BYTE,
         SSD1306_DISPLAY_OFF,
         SSD1306_SET_DISPLAY_CLOCK_DIV,
@@ -122,7 +156,7 @@ void SSD1306_Init(void)
         SSD1306_SET_VCOM_DETECT,
         0x40,
         SSD1306_DISPLAY_ALL_ON_RESUME,
-        SSD1306_NORMAL_DISPLAY,
+        displayMode,
         SSD1306_DEACTIVATE_SCROLL,
         SSD1306_DISPLAY_ON
     };
@@ -210,4 +244,41 @@ void SSD1306_ReadBuffer(uint8_t* buf)
         ptr += FRAME_SIZE;
     }
     I2C_MasterReceiveData(&i2c3Handle, ptr, count, SLAVE_ADDR);
+}
+
+void SSD1306_Print(const char* text, uint32_t length, uint8_t fontSize)
+{
+    SSD1306_ClearDisplay();
+    uint8_t lineLength = (uint8_t) length;
+    const uint8_t charsPerLine = SCREEN_WIDTH / (FONT_WIDTH * fontSize + 1);
+    if (length > charsPerLine)
+    {
+        lineLength = charsPerLine;
+    }
+
+    uint8_t lineNumber = 0;
+    while (length > charsPerLine)
+    {
+        for (uint8_t i = 0; i < lineLength; i++)
+        {
+            SSD1306_PrintChar(
+                text[lineNumber * charsPerLine + i],
+                lineNumber * (FONT_HEIGHT * fontSize + 1),
+                i * (FONT_WIDTH * fontSize + 1),
+                fontSize
+            );
+        }
+        lineNumber++;
+        length -= charsPerLine;
+    }
+
+    for (uint8_t i = 0; i < length; i++)
+    {
+        SSD1306_PrintChar(
+            text[lineNumber * charsPerLine + i],
+            lineNumber * (FONT_HEIGHT * fontSize + 1),
+            i * (FONT_WIDTH * fontSize + 1),
+            fontSize
+        );
+    }
 }
