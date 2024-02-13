@@ -139,7 +139,7 @@ void SSD1306_ClearDisplay(void)
 
 void SSD1306_DrawPixel(uint8_t x, uint8_t y, uint8_t color)
 {
-    if ((x >= 0) && (x < SCREEN_WIDTH) && (y >= 0) && (y < SCREEN_HEIGHT))
+    if ((y >= 0) && (y < SCREEN_WIDTH) && (x >= 0) && (x < SCREEN_HEIGHT))
     {
         switch (color)
         {
