@@ -12,6 +12,8 @@ static void I2C_SetAddressWrite(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr);
 static void I2C_SetAddressRead(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr);
 static void I2C_ClearAddrFlag(I2C_RegDef_t *pI2Cx);
 static void I2C_SetNBytes(I2C_RegDef_t *pI2Cx, uint8_t nBytes);
+static void I2C_SetReload(I2C_RegDef_t *pI2Cx);
+static void I2C_ClearReload(I2C_RegDef_t *pI2Cx);
 
 static void I2C_HandleRXNEInterrupt(I2C_Handle_t *pI2CHandle);
 static void I2C_HandleTXISInterrupt(I2C_Handle_t *pI2CHandle);
@@ -47,7 +49,18 @@ static void I2C_ClearAddrFlag(I2C_RegDef_t *pI2Cx)
 
 static void I2C_SetNBytes(I2C_RegDef_t *pI2Cx, uint8_t nBytes)
 {
+	pI2Cx->CR2 &= ~(0xFF << I2C_CR2_NBYTES);
 	pI2Cx->CR2 |= nBytes << I2C_CR2_NBYTES;
+}
+
+static void I2C_SetReload(I2C_RegDef_t *pI2Cx)
+{
+	REG_SET_BIT(pI2Cx->CR2, I2C_CR2_RELOAD);
+}
+
+static void I2C_ClearReload(I2C_RegDef_t *pI2Cx)
+{
+	REG_CLEAR_BIT(pI2Cx->CR2, I2C_CR2_RELOAD);
 }
 
 void I2C_GenerateStopCondition(I2C_RegDef_t *pI2Cx)
@@ -159,7 +172,7 @@ void I2C_DeInit(I2C_RegDef_t *pI2Cx)
 	I2C_PeriClockControl(pI2Cx, DISABLE);
 }
 
-void I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxbuffer, uint8_t len, uint8_t slaveAddr)
+void I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxbuffer, uint32_t len, uint8_t slaveAddr)
 {
 	// confirm that bus is not busy
 	while (REG_TEST_BIT(pI2CHandle->pI2Cx->ISR, I2C_ISR_BUSY));
@@ -167,7 +180,19 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxbuffer, uint8_t le
 	// send the address of the slave with r/nw bit set to w(0) (total 8 bits)
 	I2C_SetAddressWrite(pI2CHandle->pI2Cx, slaveAddr);
 
-	I2C_SetNBytes(pI2CHandle->pI2Cx, len);
+	uint8_t bytesToTransfer = (uint8_t) len;
+	if (len > 255)
+	{
+		bytesToTransfer = 255;
+		len -= 255;
+		I2C_SetReload(pI2CHandle->pI2Cx);
+	}
+	else
+	{
+		len = 0;
+	}
+
+	I2C_SetNBytes(pI2CHandle->pI2Cx, bytesToTransfer);
 
 	// generate the START condition
 	I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
@@ -178,13 +203,33 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxbuffer, uint8_t le
 	// confirm that address phase is completed by checking the START flag in CR2
 	while (REG_TEST_BIT(pI2CHandle->pI2Cx->CR2, I2C_CR2_START));
 
-	// send the data until len becomes 0
-	while (len > 0)
+	while (1)
 	{
-		while (!REG_TEST_BIT(pI2CHandle->pI2Cx->ISR, I2C_ISR_TXE)); // wait till TXE is setup
-		pI2CHandle->pI2Cx->TXDR = *pTxbuffer;
-		pTxbuffer++;
-		len--;
+		for (uint8_t i = 0; i < bytesToTransfer; i++)
+		{
+			while (!REG_TEST_BIT(pI2CHandle->pI2Cx->ISR, I2C_ISR_TXE)); // wait till TXE is setup
+			pI2CHandle->pI2Cx->TXDR = *pTxbuffer;
+			pTxbuffer++;
+		}
+		
+		if (len > 255)
+		{
+			bytesToTransfer = 255;
+			len -= 255;
+			I2C_SetNBytes(pI2CHandle->pI2Cx, bytesToTransfer);
+			I2C_SetReload(pI2CHandle->pI2Cx);
+		}
+		else if (len > 0)
+		{
+			bytesToTransfer = (uint8_t) len;
+			len = 0;
+			I2C_SetNBytes(pI2CHandle->pI2Cx, bytesToTransfer);
+			I2C_ClearReload(pI2CHandle->pI2Cx);
+		}
+		else
+		{
+			break;
+		}
 	}
 
 	// when len becomes zero wait for TXE=1 and TC=1 before generating the STOP condition
@@ -198,7 +243,7 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle, uint8_t *pTxbuffer, uint8_t le
 	I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
 }
 
-void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint8_t len, uint8_t slaveAddr)
+void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint32_t len, uint8_t slaveAddr)
 {
 	// confirm that bus is not busy
 	while (REG_TEST_BIT(pI2CHandle->pI2Cx->ISR, I2C_ISR_BUSY));
@@ -318,7 +363,7 @@ uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint3
 	return busyState;
 }
 
-uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint8_t len, uint8_t slaveAddr)
+uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, uint32_t len, uint8_t slaveAddr)
 {
 	uint8_t busyState = pI2CHandle->txRxState;
 

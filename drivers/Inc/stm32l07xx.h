@@ -244,6 +244,7 @@ typedef struct
 
 #define REG_SET_BIT(REG, BIT)					(REG |= (1 << (BIT)))
 #define REG_CLEAR_BIT(REG, BIT)					(REG &= ~(1 << (BIT)))
+#define REG_FLIP_BIT(REG, BIT)					(REG ^= (1 << (BIT)))
 #define REG_TEST_BIT(REG, BIT)					(REG & (1 << (BIT)))
 
 /*
@@ -441,6 +442,7 @@ typedef struct
 #define I2C_CR2_START 							13
 #define I2C_CR2_STOP  				 			14
 #define I2C_CR2_NBYTES 							16
+#define I2C_CR2_RELOAD 							24
 
 /*
  * Bit position definitions I2C_TIMINGR
