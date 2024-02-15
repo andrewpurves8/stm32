@@ -1,5 +1,5 @@
 /*
- * oled_test.c
+ * ssd1306_test.c
  *
  *  Created on: Feb 12, 2024
  *      Author: andrew.purves

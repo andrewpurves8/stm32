@@ -1,5 +1,5 @@
 /*
- * i2c_read_temperature.c
+ * am2320_test.c
  *
  *  Created on: Jan 31, 2024
  *      Author: andrew.purves
