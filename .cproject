@@ -73,10 +73,10 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Inc"/>
-						<entry excluding="016uart_case.c|i2c_read_temperature.c|012i2c_master_rx_testingIT.c|015uart_tx.c|014i2c_slave_tx_string2.c|013i2c_slave_tx_string.c|011i2c_master_rx_testing.c|010i2c_master_tx_testing.c|009spi_message_rcv_it.c|008spi_cmd_handling.c|005button_interrupt.c|002led_button.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
+						<entry excluding="i2c_read_temperature copy.c|oled_test.c|016uart_case.c|012i2c_master_rx_testingIT.c|015uart_tx.c|014i2c_slave_tx_string2.c|013i2c_slave_tx_string.c|011i2c_master_rx_testing.c|010i2c_master_tx_testing.c|009spi_message_rcv_it.c|008spi_cmd_handling.c|005button_interrupt.c|002led_button.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Startup"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="bsp"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
+						<entry excluding="Src/stm32l07xx_i2c_driver copy.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -147,9 +147,9 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Inc"/>
-						<entry excluding="016uart_case.c|i2c_read_temperature.c|012i2c_master_rx_testingIT.c|015uart_tx.c|014i2c_slave_tx_string2.c|013i2c_slave_tx_string.c|011i2c_master_rx_testing.c|010i2c_master_tx_testing.c|009spi_message_rcv_it.c|008spi_cmd_handling.c|005button_interrupt.c|002led_button.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
+						<entry excluding="i2c_read_temperature copy.c|oled_test.c|016uart_case.c|012i2c_master_rx_testingIT.c|015uart_tx.c|014i2c_slave_tx_string2.c|013i2c_slave_tx_string.c|011i2c_master_rx_testing.c|010i2c_master_tx_testing.c|009spi_message_rcv_it.c|008spi_cmd_handling.c|005button_interrupt.c|002led_button.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Startup"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
+						<entry excluding="Src/stm32l07xx_i2c_driver copy.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

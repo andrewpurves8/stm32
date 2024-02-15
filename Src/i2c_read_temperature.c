@@ -9,29 +9,28 @@
 #include <string.h>
 #include "stm32l07xx.h"
 
-#define MY_ADDR 								0x61
-
 // datasheet specifies that 0xB8 should be sent for write, but address is expected to be the 7 MSBs
 #define SLAVE_ADDR		  						0x5C
+#define MY_ADDR 								0x61
 #define READ_COMMAND							0x03
 #define TEMPERATURE_ADDR						0x02
 #define TEMPERATURE_LEN							2
+#define HUMIDITY_ADDR							0x00
+#define HUMIDITY_LEN							2
 
 // request to sensor contains function code + starting address + number of registers
 #define DATA_LEN_SEND							3
-// sensor sends function code + number of bytes + requested data (TEMPERATURE_LEN) + CRC code
-#define DATA_LEN_RECEIVE						(3 + TEMPERATURE_LEN)
+// sensor sends function code + number of bytes + requested data (TEMPERATURE_LEN + HUMIDITY_LEN) + CRC code
+#define DATA_LEN_RECEIVE						(3 + TEMPERATURE_LEN + HUMIDITY_LEN)
 
-void delayUs(uint32_t us)
-{
-	for (uint32_t i = 0; i < us; i++);
-}
-
-I2C_Handle_t i2c3Handle;
+static I2C_Handle_t i2c3Handle;
 
 // rcv buffer
-uint8_t rcvBuf[DATA_LEN_RECEIVE];
-uint8_t sendData[DATA_LEN_SEND] = {READ_COMMAND, TEMPERATURE_ADDR, TEMPERATURE_LEN};
+static uint8_t rcvBuf[DATA_LEN_RECEIVE];
+static uint8_t sendData[DATA_LEN_SEND] = {READ_COMMAND, HUMIDITY_ADDR, TEMPERATURE_LEN + HUMIDITY_LEN};
+
+static float temperature = 0.f;
+static float humidity = 0.f;
 
 /*
  * PC0-> SCL
@@ -46,14 +45,14 @@ void I2C3_GPIOInits(void)
 	i2cPins.pinConfig.pinOPType = GPIO_OP_TYPE_OD;
 	i2cPins.pinConfig.pinPuPdControl = GPIO_PIN_PU;
 	i2cPins.pinConfig.pinAltFunMode = 7;
-	i2cPins.pinConfig.pinSpeed = GPOI_SPEED_HIGH;
-
-	// scl
-	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_0;
-	GPIO_Init(&i2cPins);
+	i2cPins.pinConfig.pinSpeed = GPIO_SPEED_HIGH;
 
 	// sda
 	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_1;
+	GPIO_Init(&i2cPins);
+
+	// scl
+	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_0;
 	GPIO_Init(&i2cPins);
 }
 
@@ -69,34 +68,6 @@ void I2C3_Inits(void)
 int main(void)
 {
 	RCC_SetSysClk(SYS_CLK_HSI);
-	
-	GPIO_Handle_t i2cPins;
-
-	i2cPins.pGPIOx = GPIOB;
-	i2cPins.pinConfig.pinMode = GPIO_MODE_OUT;
-	i2cPins.pinConfig.pinOPType = GPIO_OP_TYPE_PP;
-	i2cPins.pinConfig.pinPuPdControl = GPIO_NO_PUPD;
-	i2cPins.pinConfig.pinSpeed = GPOI_SPEED_HIGH;
-	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_0;
-	GPIO_Init(&i2cPins);
-
-	volatile uint8_t i = 0x55;
-	GPIO_WriteToOutputPin(GPIOB, 0, 1);
-	// delayUs(1);
-	i ^= i;
-	GPIO_WriteToOutputPin(GPIOB, 0, 0);
-	i ^= i;
-	i ^= i;
-	i ^= i;
-	i ^= i;
-	i ^= i;
-	i ^= i;
-	i ^= i;
-	i ^= i;
-	i ^= i;
-	i ^= i;
-	// delayUs(10);
-	GPIO_WriteToOutputPin(GPIOB, 0, 1);
 
 	I2C3_GPIOInits();
 
@@ -108,17 +79,17 @@ int main(void)
 
 	// enable the i2c peripheral
 	I2C_PeripheralControl(I2C3, ENABLE);
-	
-	// wake sensor
+
 	uint8_t dummyWrite = 0;
-	I2C_MasterSendDataIT(&i2c3Handle, &dummyWrite, 0, SLAVE_ADDR);
 
 	while (1)
 	{
-		delay(250);
-
-		I2C_MasterSendDataIT(&i2c3Handle, &sendData, DATA_LEN_SEND, SLAVE_ADDR);
-		I2C_MasterReceiveDataIT(&i2c3Handle, &rcvBuf, DATA_LEN_RECEIVE, SLAVE_ADDR);
+		while (I2C_MasterSendDataIT(&i2c3Handle, &dummyWrite, 1, SLAVE_ADDR) != I2C_READY);
+		delay(10);
+		while (I2C_MasterSendDataIT(&i2c3Handle, &sendData, DATA_LEN_SEND, SLAVE_ADDR) != I2C_READY);
+		delay(10);
+		while (I2C_MasterReceiveDataIT(&i2c3Handle, &rcvBuf, DATA_LEN_RECEIVE, SLAVE_ADDR) != I2C_READY);
+		delay(1000);
 	}
 }
 
@@ -129,26 +100,38 @@ void I2C3_IRQHandler(void)
 
 void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle, uint8_t appEv)
 {
-	// sensor NACKs the first time after being woken up, so allow one NACK
-	static uint8_t nackCount = 0;
+	static uint8_t nackReceived = RESET;
+	static uint8_t humidityHighByte = 0;
+	static uint8_t humidityLowByte = 0;
+	static uint8_t temperatureHighByte = 0;
+	static uint8_t temperatureLowByte = 0;
 	if (appEv == I2C_EV_RX_CMPLT)
 	{
-		
+		humidityHighByte = rcvBuf[2];
+		humidityLowByte = rcvBuf[3];
+		humidity = (humidityHighByte << 8 | humidityLowByte) / 10.f;
+
+		temperatureHighByte = rcvBuf[4];
+		temperatureLowByte = rcvBuf[5];
+		temperature = (temperatureHighByte << 8 | temperatureLowByte) / 10.f;
+	}
+	else if (appEv == I2C_EV_STOP)
+	{
+		// the stop after the NACK caused by sensor wakeup must be ignored
+		if (nackReceived)
+		{
+			nackReceived = RESET;
+		}
+		else
+		{
+			I2C_CloseSendData(pI2CHandle);
+		}
 	}
 	else if (appEv == I2C_ERROR_NACK)
 	{
-		if (nackCount > 0)
-		{
-			// in master ack failure happens when slave fails to send ack for the byte
-			// sent from the master.
-			I2C_CloseSendData(pI2CHandle);
-
-			// generate the stop condition to release the bus
-			I2C_GenerateStopCondition(I2C3);
-
-			// hang in infinite loop
-			while (1);
-		}
-		nackCount++;
+		nackReceived = SET;
+		// REG_SET_BIT(pI2CHandle->pI2Cx->ISR, I2C_ISR_TXE);
+		I2C_CloseSendData(pI2CHandle);
+		I2C_GenerateStopCondition(I2C3);
 	}
 }

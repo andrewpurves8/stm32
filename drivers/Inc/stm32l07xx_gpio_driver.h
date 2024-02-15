@@ -78,7 +78,7 @@ typedef struct
 #define GPIO_SPEED_LOW 							0
 #define GPIO_SPEED_MEDIUM 						1
 #define GPIO_SPEED_FAST 						2
-#define GPOI_SPEED_HIGH 						3
+#define GPIO_SPEED_HIGH 						3
 
 /*
  * GPIO pin pull up AND pull down configuration macros

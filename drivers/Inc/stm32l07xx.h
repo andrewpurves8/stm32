@@ -16,21 +16,31 @@
 
 /**********************************START:Processor Specific Details **********************************/
 /*
- * ARM Cortex M0+ Processor NVIC ISERx register Addresses
+ * ARM Cortex M0+ Processor NVIC ISERx register
  */
 #define NVIC_ISER          						((__vo uint32_t*) 0xE000E100)
 
 
 /*
- * ARM Cortex M0+ Processor NVIC ICERx register Addresses
+ * ARM Cortex M0+ Processor NVIC ICERx register
  */
 #define NVIC_ICER 								((__vo uint32_t*) 0xE000E180)
 
 
 /*
- * ARM Cortex M0+ Processor Priority Register Address Calculation
+ * ARM Cortex M0+ Processor Priority register
  */
 #define NVIC_PR			 						((__vo uint32_t*) 0xE000E400)
+
+/*
+ * ARM Cortex M0+ Processor SysTick Control and Status register
+ */
+#define SYSTICK_CSR								((__vo uint32_t*) 0xE000E010)
+
+/*
+ * ARM Cortex M0+ Processor SysTick Reload Value register
+ */
+#define SYSTICK_RVR								((__vo uint32_t*) 0xE000E014)
 
 /*
  * ARM Cortex Mx Processor number of priority bits implemented in Priority Register

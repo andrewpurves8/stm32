@@ -37,7 +37,7 @@ void I2C3_GPIOInits(void)
 	i2cPins.pinConfig.pinOPType = GPIO_OP_TYPE_OD;
 	i2cPins.pinConfig.pinPuPdControl = GPIO_PIN_PU;
 	i2cPins.pinConfig.pinAltFunMode = 7;
-	i2cPins.pinConfig.pinSpeed = GPOI_SPEED_HIGH;
+	i2cPins.pinConfig.pinSpeed = GPIO_SPEED_HIGH;
 
 	// scl
 	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_0;

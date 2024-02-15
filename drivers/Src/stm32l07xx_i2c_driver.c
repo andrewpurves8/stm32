@@ -7,6 +7,9 @@
 
 #include "stm32l07xx_i2c_driver.h"
 
+extern const char* events[100];
+extern uint8_t eventsC;
+
 static void I2C_GenerateStartCondition(I2C_RegDef_t *pI2Cx);
 static void I2C_SetAddressWrite(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr);
 static void I2C_SetAddressRead(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr);
@@ -379,7 +382,6 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, ui
 		I2C_EnableInterrupts(pI2CHandle->pI2Cx);
 		I2C_SetAddressRead(pI2CHandle->pI2Cx, slaveAddr);
 		I2C_SetNBytes(pI2CHandle->pI2Cx, len);
-		pI2CHandle->pI2Cx->CR2 |= (1 << 24);
 		I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
 	}
 
@@ -505,7 +507,6 @@ static void I2C_HandleIrqEvents(I2C_Handle_t *pI2CHandle)
 		// STOF flag is set
 		// clear the STOPF
 		REG_SET_BIT(pI2CHandle->pI2Cx->ICR, I2C_ICR_STOPCF);
-		REG_SET_BIT(pI2CHandle->pI2Cx->ISR, I2C_ISR_TXE);
 
 		// notify the application that STOP is detected
 		I2C_ApplicationEventCallback(pI2CHandle, I2C_EV_STOP);
