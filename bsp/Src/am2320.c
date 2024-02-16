@@ -11,7 +11,7 @@
 
 // datasheet specifies that 0xB8 should be sent for write, but address is expected to be the 7 MSBs
 #define AM2320_SLAVE_ADDR		  				0x5C
-#define AM2320_MY_ADDR                         0x61
+#define AM2320_MY_ADDR                          0x61
 #define AM2320_READ_COMMAND						0x03
 #define AM2320_TEMPERATURE_ADDR					0x02
 #define AM2320_TEMPERATURE_LEN					2

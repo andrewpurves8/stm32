@@ -33,6 +33,7 @@ static void I2C_SetAddressWrite(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr)
 {
 	REG_CLEAR_BIT(pI2Cx->CR2, I2C_CR2_ADD10);
 	slaveAddr = slaveAddr << I2C_CR2_ADD71;
+	pI2Cx->CR2 &= ~(0x7F << I2C_CR2_ADD71);
 	pI2Cx->CR2 |= slaveAddr;
 	REG_CLEAR_BIT(pI2Cx->CR2, I2C_CR2_RDWRN);
 }
@@ -41,6 +42,7 @@ static void I2C_SetAddressRead(I2C_RegDef_t *pI2Cx, uint8_t slaveAddr)
 {
 	REG_CLEAR_BIT(pI2Cx->CR2, I2C_CR2_ADD10);
 	slaveAddr = slaveAddr << I2C_CR2_ADD71;
+	pI2Cx->CR2 &= ~(0x7F << I2C_CR2_ADD71);
 	pI2Cx->CR2 |= slaveAddr;
 	REG_SET_BIT(pI2Cx->CR2, I2C_CR2_RDWRN);
 }

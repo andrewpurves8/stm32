@@ -39,59 +39,58 @@
 #define SSD1306_SET_START_LINE                  0x40
 #define SSD1306_SET_VCOM_DETECT                 0xDB
 
-static void I2C3_GPIOInits(void);
-static void I2C3_Inits(void);
-static void SSD1306_SendCommand(uint8_t command);
+static void I2C1_GPIOInits(void);
+static void I2C1_Inits(void);
 static void SSD1306_SendCommandList(uint8_t* commandList, uint8_t numBytes);
 static void SSD1306_PrintChar(char c, uint8_t x, uint8_t y, uint8_t fontSize);
 static void SSD1306_DrawRect(uint8_t x, uint8_t width, uint8_t y, uint8_t height);
 
-static I2C_Handle_t i2c3Handle;
+static I2C_Handle_t i2c1Handle;
 static uint8_t* buffer;
 
 /*
- * PC0-> SCL
- * PC1 -> SDA
+//  * PC0-> SCL
+//  * PC1 -> SDA
+ * PB8-> SCL
+ * PB9 -> SDA
  */
-static void I2C3_GPIOInits(void)
+static void I2C1_GPIOInits(void)
 {
 	GPIO_Handle_t i2cPins;
 
-	i2cPins.pGPIOx = GPIOC;
+	// i2cPins.pGPIOx = GPIOC;
+	i2cPins.pGPIOx = GPIOB;
 	i2cPins.pinConfig.pinMode = GPIO_MODE_ALTFN;
 	i2cPins.pinConfig.pinOPType = GPIO_OP_TYPE_OD;
 	i2cPins.pinConfig.pinPuPdControl = GPIO_PIN_PU;
-	i2cPins.pinConfig.pinAltFunMode = 7;
+	// i2cPins.pinConfig.pinAltFunMode = 7;
+	i2cPins.pinConfig.pinAltFunMode = 4;
 	i2cPins.pinConfig.pinSpeed = GPIO_SPEED_HIGH;
 
-	// scl
-	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_0;
-	GPIO_Init(&i2cPins);
-
 	// sda
-	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_1;
+	// i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_1;
+	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_9;
+	GPIO_Init(&i2cPins);
+
+	// scl
+	// i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_0;
+	i2cPins.pinConfig.pinNumber = GPIO_PIN_NO_8;
 	GPIO_Init(&i2cPins);
 }
 
-static void I2C3_Inits(void)
+static void I2C1_Inits(void)
 {
-	i2c3Handle.pI2Cx = I2C3;
-	i2c3Handle.config.ownAddress = SSD1306_MY_ADDR;
-	// i2c3Handle.config.sclSpeed = I2C_SCL_SPEED_SM;
-	i2c3Handle.config.sclSpeed = I2C_SCL_SPEED_FM;
+	i2c1Handle.pI2Cx = I2C1;
+	i2c1Handle.config.ownAddress = SSD1306_MY_ADDR;
+	i2c1Handle.config.sclSpeed = I2C_SCL_SPEED_SM;
+	// i2c1Handle.config.sclSpeed = I2C_SCL_SPEED_FM;
 
-	I2C_Init(&i2c3Handle);
-}
-
-static void SSD1306_SendCommand(uint8_t command)
-{
-    uint8_t data[2] = {SSD1306_COMMAND_CONTROL_BYTE, command};
-    I2C_MasterSendData(&i2c3Handle, &data, 2, SSD1306_SLAVE_ADDR);
+	I2C_Init(&i2c1Handle);
 }
 
 static void SSD1306_SendCommandList(uint8_t* commandList, uint8_t numBytes)
 {
-    I2C_MasterSendData(&i2c3Handle, commandList, numBytes, SSD1306_SLAVE_ADDR);
+    I2C_MasterSendData(&i2c1Handle, commandList, numBytes, SSD1306_SLAVE_ADDR);
 }
 
 static void SSD1306_PrintChar(char c, uint8_t x, uint8_t y, uint8_t fontSize)
@@ -127,9 +126,14 @@ static void SSD1306_DrawRect(uint8_t x, uint8_t width, uint8_t y, uint8_t height
 
 void SSD1306_Init(uint8_t displayMode)
 {
-    I2C3_GPIOInits();
-    I2C3_Inits();
-	I2C_PeripheralControl(I2C3, ENABLE);
+    I2C1_GPIOInits();
+    I2C1_Inits();
+	I2C_PeripheralControl(I2C1, ENABLE);
+    
+    // send a dummy byte because I2C1 messes up the first address phase it sends
+    static const uint8_t dummyByte = 0;
+    I2C_MasterSendData(&i2c1Handle, &dummyByte, 1, SSD1306_SLAVE_ADDR);
+    delay(10);
     
     const uint8_t init[] = {
         SSD1306_COMMAND_CONTROL_BYTE,
@@ -215,7 +219,7 @@ void SSD1306_Display()
         {
             bufferPortion[i + 1] = *(ptr + i);
         }
-        I2C_MasterSendData(&i2c3Handle, &bufferPortion, SSD1306_FRAME_SIZE + 1, SSD1306_SLAVE_ADDR);
+        I2C_MasterSendData(&i2c1Handle, &bufferPortion, SSD1306_FRAME_SIZE + 1, SSD1306_SLAVE_ADDR);
         count -= SSD1306_FRAME_SIZE;
         ptr += SSD1306_FRAME_SIZE;
     }
@@ -224,26 +228,26 @@ void SSD1306_Display()
     {
         bufferPortion[i + 1] = *(ptr + i);
     }
-    I2C_MasterSendData(&i2c3Handle, &bufferPortion, count, SSD1306_SLAVE_ADDR);
+    I2C_MasterSendData(&i2c1Handle, &bufferPortion, count, SSD1306_SLAVE_ADDR);
 }
 
 void SSD1306_ReadBuffer(uint8_t* buf)
 {
     uint8_t controlByte = SSD1306_DATA_CONTROL_BYTE;
     uint8_t dummyRead;
-    I2C_MasterSendData(&i2c3Handle, &controlByte, 1, SSD1306_SLAVE_ADDR);
-    I2C_MasterReceiveData(&i2c3Handle, &dummyRead, 1, SSD1306_SLAVE_ADDR);
+    I2C_MasterSendData(&i2c1Handle, &controlByte, 1, SSD1306_SLAVE_ADDR);
+    I2C_MasterReceiveData(&i2c1Handle, &dummyRead, 1, SSD1306_SLAVE_ADDR);
     
     uint16_t count = SSD1306_BUFFER_SIZE - 1;
     uint8_t *ptr = buf;
     while (count > SSD1306_FRAME_SIZE)
     {
-        I2C_MasterSendData(&i2c3Handle, &controlByte, 1, SSD1306_SLAVE_ADDR);
-        I2C_MasterReceiveData(&i2c3Handle, ptr, SSD1306_FRAME_SIZE, SSD1306_SLAVE_ADDR);
+        I2C_MasterSendData(&i2c1Handle, &controlByte, 1, SSD1306_SLAVE_ADDR);
+        I2C_MasterReceiveData(&i2c1Handle, ptr, SSD1306_FRAME_SIZE, SSD1306_SLAVE_ADDR);
         count -= SSD1306_FRAME_SIZE;
         ptr += SSD1306_FRAME_SIZE;
     }
-    I2C_MasterReceiveData(&i2c3Handle, ptr, count, SSD1306_SLAVE_ADDR);
+    I2C_MasterReceiveData(&i2c1Handle, ptr, count, SSD1306_SLAVE_ADDR);
 }
 
 void SSD1306_Print(const char* text, uint32_t length, uint8_t fontSize)
@@ -257,28 +261,25 @@ void SSD1306_Print(const char* text, uint32_t length, uint8_t fontSize)
     }
 
     uint8_t lineNumber = 0;
-    while (length > charsPerLine)
-    {
-        for (uint8_t i = 0; i < lineLength; i++)
-        {
-            SSD1306_PrintChar(
-                text[lineNumber * charsPerLine + i],
-                lineNumber * (FONT_HEIGHT * fontSize + 1),
-                i * (FONT_WIDTH * fontSize + 1),
-                fontSize
-            );
-        }
-        lineNumber++;
-        length -= charsPerLine;
-    }
+    uint8_t columnNumber = 0;
 
     for (uint8_t i = 0; i < length; i++)
     {
+        if (i == charsPerLine || text[i] == '\n')
+        {
+            columnNumber = 0;
+            lineNumber++;
+        }
+        if (text[i] == '\n')
+        {
+            continue;
+        }
         SSD1306_PrintChar(
-            text[lineNumber * charsPerLine + i],
+            text[i],
             lineNumber * (FONT_HEIGHT * fontSize + 1),
-            i * (FONT_WIDTH * fontSize + 1),
+            columnNumber * (FONT_WIDTH * fontSize + 1),
             fontSize
         );
+        columnNumber++;
     }
 }
