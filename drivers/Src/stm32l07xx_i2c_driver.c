@@ -165,7 +165,7 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
 
     // program the device own address
 	regValue = 0;
-	regValue |= pI2CHandle->config.deviceAddress << I2C_OAR1_ADD71;
+	regValue |= pI2CHandle->config.ownAddress << I2C_OAR1_ADD71;
 	pI2CHandle->pI2Cx->OAR1 = regValue;
 	REG_SET_BIT(pI2CHandle->pI2Cx->OAR1, I2C_OAR1_EN);
 }
@@ -354,7 +354,7 @@ uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pTxBuffer, uint3
 		pI2CHandle->pTxBuffer = pTxBuffer;
 		pI2CHandle->txLen = len;
 		pI2CHandle->txRxState = I2C_BUSY_IN_TX;
-		pI2CHandle->devAddr = slaveAddr;
+		pI2CHandle->slaveAddress = slaveAddr;
 		pI2CHandle->masterSlave = I2C_MASTER;
 
 		I2C_EnableInterrupts(pI2CHandle->pI2Cx);
@@ -376,7 +376,7 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle, uint8_t *pRxBuffer, ui
 		pI2CHandle->rxLen = len;
 		pI2CHandle->txRxState = I2C_BUSY_IN_RX;
 		pI2CHandle->rxSize = len;
-		pI2CHandle->devAddr = slaveAddr;
+		pI2CHandle->slaveAddress = slaveAddr;
 		pI2CHandle->masterSlave = I2C_MASTER;
 
 		I2C_EnableInterrupts(pI2CHandle->pI2Cx);

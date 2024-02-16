@@ -10,13 +10,13 @@
 #include <string.h>
 #include "font.c"
 
-#define MY_ADDR 								0x61
-#define SLAVE_ADDR		  						0x3C
+#define SSD1306_MY_ADDR                         0x61
+#define SSD1306_SLAVE_ADDR                      0x3C
 
-#define SCREEN_WIDTH                            128
-#define SCREEN_HEIGHT                           32
-#define BUFFER_SIZE                             (SCREEN_WIDTH * ((SCREEN_HEIGHT + 7) / 8))
-#define FRAME_SIZE                              32
+#define SSD1306_SCREEN_WIDTH                    128
+#define SSD1306_SCREEN_HEIGHT                   32
+#define SSD1306_BUFFER_SIZE                     (SSD1306_SCREEN_WIDTH * ((SSD1306_SCREEN_HEIGHT + 7) / 8))
+#define SSD1306_FRAME_SIZE                      32
 
 #define SSD1306_CHARGE_PUMP                     0x8D
 #define SSD1306_COLUMN_ADDR                     0x21
@@ -76,7 +76,7 @@ static void I2C3_GPIOInits(void)
 static void I2C3_Inits(void)
 {
 	i2c3Handle.pI2Cx = I2C3;
-	i2c3Handle.config.deviceAddress = MY_ADDR;
+	i2c3Handle.config.ownAddress = SSD1306_MY_ADDR;
 	// i2c3Handle.config.sclSpeed = I2C_SCL_SPEED_SM;
 	i2c3Handle.config.sclSpeed = I2C_SCL_SPEED_FM;
 
@@ -86,12 +86,12 @@ static void I2C3_Inits(void)
 static void SSD1306_SendCommand(uint8_t command)
 {
     uint8_t data[2] = {SSD1306_COMMAND_CONTROL_BYTE, command};
-    I2C_MasterSendData(&i2c3Handle, &data, 2, SLAVE_ADDR);
+    I2C_MasterSendData(&i2c3Handle, &data, 2, SSD1306_SLAVE_ADDR);
 }
 
 static void SSD1306_SendCommandList(uint8_t* commandList, uint8_t numBytes)
 {
-    I2C_MasterSendData(&i2c3Handle, commandList, numBytes, SLAVE_ADDR);
+    I2C_MasterSendData(&i2c3Handle, commandList, numBytes, SSD1306_SLAVE_ADDR);
 }
 
 static void SSD1306_PrintChar(char c, uint8_t x, uint8_t y, uint8_t fontSize)
@@ -137,7 +137,7 @@ void SSD1306_Init(uint8_t displayMode)
         SSD1306_SET_DISPLAY_CLOCK_DIV,
         0x80,                                   // the suggested ratio 0x80
         SSD1306_SET_MULTIPLEX,
-        SCREEN_HEIGHT - 1,
+        SSD1306_SCREEN_HEIGHT - 1,
         SSD1306_SET_DISPLAY_OFFSET,
         0x0,                                    // no offset
         SSD1306_SET_START_LINE | 0x0,           // line #0
@@ -162,29 +162,29 @@ void SSD1306_Init(uint8_t displayMode)
     };
     SSD1306_SendCommandList(&init, sizeof(init));
 
-    buffer = (uint8_t*) malloc(BUFFER_SIZE);
+    buffer = (uint8_t*) malloc(SSD1306_BUFFER_SIZE);
     SSD1306_ClearDisplay();
 }
 
 void SSD1306_ClearDisplay(void)
 {
-    memset(buffer, 0, BUFFER_SIZE);
+    memset(buffer, 0, SSD1306_BUFFER_SIZE);
 }
 
 void SSD1306_DrawPixel(uint8_t x, uint8_t y, uint8_t color)
 {
-    if ((y >= 0) && (y < SCREEN_WIDTH) && (x >= 0) && (x < SCREEN_HEIGHT))
+    if ((y >= 0) && (y < SSD1306_SCREEN_WIDTH) && (x >= 0) && (x < SSD1306_SCREEN_HEIGHT))
     {
         switch (color)
         {
         case SSD1306_WHITE:
-            REG_SET_BIT(buffer[y + (x / 8) * SCREEN_WIDTH], x & 7);
+            REG_SET_BIT(buffer[y + (x / 8) * SSD1306_SCREEN_WIDTH], x & 7);
             break;
         case SSD1306_BLACK:
-            REG_CLEAR_BIT(buffer[y + (x / 8) * SCREEN_WIDTH], x & 7);
+            REG_CLEAR_BIT(buffer[y + (x / 8) * SSD1306_SCREEN_WIDTH], x & 7);
             break;
         case SSD1306_INVERSE:
-            REG_FLIP_BIT(buffer[y + (x / 8) * SCREEN_WIDTH], x & 7);
+            REG_FLIP_BIT(buffer[y + (x / 8) * SSD1306_SCREEN_WIDTH], x & 7);
             break;
         }
     }
@@ -199,58 +199,58 @@ void SSD1306_Display()
         0xFF,                                   // Page end (not really, but works here)
         SSD1306_COLUMN_ADDR,
         0,
-        SCREEN_WIDTH - 1
+        SSD1306_SCREEN_WIDTH - 1
     };                                          // Column start address
     SSD1306_SendCommandList(dlist1, sizeof(dlist1));
 
-    uint16_t count = BUFFER_SIZE;
+    uint16_t count = SSD1306_BUFFER_SIZE;
     uint8_t *ptr = buffer;
 
     uint8_t controlByte = SSD1306_DATA_CONTROL_BYTE;
-    uint8_t bufferPortion[FRAME_SIZE + 1];
+    uint8_t bufferPortion[SSD1306_FRAME_SIZE + 1];
     bufferPortion[0] = controlByte;
-    while (count > FRAME_SIZE)
+    while (count > SSD1306_FRAME_SIZE)
     {
-        for (uint8_t i = 0; i < FRAME_SIZE; i++)
+        for (uint8_t i = 0; i < SSD1306_FRAME_SIZE; i++)
         {
             bufferPortion[i + 1] = *(ptr + i);
         }
-        I2C_MasterSendData(&i2c3Handle, &bufferPortion, FRAME_SIZE + 1, SLAVE_ADDR);
-        count -= FRAME_SIZE;
-        ptr += FRAME_SIZE;
+        I2C_MasterSendData(&i2c3Handle, &bufferPortion, SSD1306_FRAME_SIZE + 1, SSD1306_SLAVE_ADDR);
+        count -= SSD1306_FRAME_SIZE;
+        ptr += SSD1306_FRAME_SIZE;
     }
     
     for (uint8_t i = 0; i < count; i++)
     {
         bufferPortion[i + 1] = *(ptr + i);
     }
-    I2C_MasterSendData(&i2c3Handle, &bufferPortion, count, SLAVE_ADDR);
+    I2C_MasterSendData(&i2c3Handle, &bufferPortion, count, SSD1306_SLAVE_ADDR);
 }
 
 void SSD1306_ReadBuffer(uint8_t* buf)
 {
     uint8_t controlByte = SSD1306_DATA_CONTROL_BYTE;
     uint8_t dummyRead;
-    I2C_MasterSendData(&i2c3Handle, &controlByte, 1, SLAVE_ADDR);
-    I2C_MasterReceiveData(&i2c3Handle, &dummyRead, 1, SLAVE_ADDR);
+    I2C_MasterSendData(&i2c3Handle, &controlByte, 1, SSD1306_SLAVE_ADDR);
+    I2C_MasterReceiveData(&i2c3Handle, &dummyRead, 1, SSD1306_SLAVE_ADDR);
     
-    uint16_t count = BUFFER_SIZE - 1;
+    uint16_t count = SSD1306_BUFFER_SIZE - 1;
     uint8_t *ptr = buf;
-    while (count > FRAME_SIZE)
+    while (count > SSD1306_FRAME_SIZE)
     {
-        I2C_MasterSendData(&i2c3Handle, &controlByte, 1, SLAVE_ADDR);
-        I2C_MasterReceiveData(&i2c3Handle, ptr, FRAME_SIZE, SLAVE_ADDR);
-        count -= FRAME_SIZE;
-        ptr += FRAME_SIZE;
+        I2C_MasterSendData(&i2c3Handle, &controlByte, 1, SSD1306_SLAVE_ADDR);
+        I2C_MasterReceiveData(&i2c3Handle, ptr, SSD1306_FRAME_SIZE, SSD1306_SLAVE_ADDR);
+        count -= SSD1306_FRAME_SIZE;
+        ptr += SSD1306_FRAME_SIZE;
     }
-    I2C_MasterReceiveData(&i2c3Handle, ptr, count, SLAVE_ADDR);
+    I2C_MasterReceiveData(&i2c3Handle, ptr, count, SSD1306_SLAVE_ADDR);
 }
 
 void SSD1306_Print(const char* text, uint32_t length, uint8_t fontSize)
 {
     SSD1306_ClearDisplay();
     uint8_t lineLength = (uint8_t) length;
-    const uint8_t charsPerLine = SCREEN_WIDTH / (FONT_WIDTH * fontSize + 1);
+    const uint8_t charsPerLine = SSD1306_SCREEN_WIDTH / (FONT_WIDTH * fontSize + 1);
     if (length > charsPerLine)
     {
         lineLength = charsPerLine;

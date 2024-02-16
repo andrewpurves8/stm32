@@ -16,7 +16,7 @@
 typedef struct
 {
 	uint32_t sclSpeed;
-	uint8_t deviceAddress;
+	uint8_t ownAddress;
 } I2C_Config_t;
 
 /*
@@ -31,7 +31,7 @@ typedef struct
 	uint32_t txLen;
 	uint32_t rxLen;
 	uint8_t txRxState;		/* !< communication state > */
-	uint8_t devAddr;		/* !< device address > */
+	uint8_t slaveAddress;
 	uint32_t rxSize;
 	uint8_t masterSlave;	/* !< whether the device is master or slave  > */
 } I2C_Handle_t;

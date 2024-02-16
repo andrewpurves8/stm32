@@ -45,7 +45,7 @@ void I2C3_GPIOInits(void)
 void I2C3_Inits(void)
 {
 	i2c3Handle.pI2Cx = I2C3;
-	i2c3Handle.config.deviceAddress = MY_ADDR;
+	i2c3Handle.config.ownAddress = MY_ADDR;
 	i2c3Handle.config.sclSpeed = I2C_SCL_SPEED_SM;
 
 	I2C_Init(&i2c3Handle);
