@@ -96,6 +96,7 @@
 /*
  * Base addresses of peripherals which are hanging on APB2 bus
  */
+#define ADC1_BASEADDR							(APB2PERIPH_BASEADDR + 0x2400)
 #define EXTI_BASEADDR							(APB2PERIPH_BASEADDR + 0x0400)
 #define SPI1_BASEADDR							(APB2PERIPH_BASEADDR + 0x3000)
 #define SYSCFG_BASEADDR        					(APB2PERIPH_BASEADDR + 0x0000)
@@ -226,6 +227,29 @@ typedef struct
 } USART_RegDef_t;
 
 /*
+ * peripheral register definition structure for ADC
+ */
+typedef struct
+{
+	__vo uint32_t ISR;
+	__vo uint32_t IER;
+	__vo uint32_t CR;
+	__vo uint32_t CFGR1;
+	__vo uint32_t CFGR2;
+	__vo uint32_t SMPR;
+	uint32_t RESERVED1[2];
+	__vo uint32_t TR;
+	uint32_t RESERVED2;
+	__vo uint32_t CHSELR;
+	uint32_t RESERVED3[5];
+	__vo uint32_t DR;
+	uint32_t RESERVED4[28];
+	__vo uint32_t CALFACT;
+	uint32_t RESERVED5[148];
+	__vo uint32_t CCR;
+} ADC_RegDef_t;
+
+/*
  * peripheral definitions ( Peripheral base addresses typecasted to xxx_RegDef_t)
  */
 #define GPIOA  									((GPIO_RegDef_t*) GPIOA_BASEADDR)
@@ -251,6 +275,8 @@ typedef struct
 #define USART2  								((USART_RegDef_t*) USART2_BASEADDR)
 #define USART4  								((USART_RegDef_t*) USART4_BASEADDR)
 #define USART5  								((USART_RegDef_t*) USART5_BASEADDR)
+
+#define ADC1  									((ADC_RegDef_t*) ADC1_BASEADDR)
 
 #define REG_SET_BIT(REG, BIT)					(REG |= (1 << (BIT)))
 #define REG_CLEAR_BIT(REG, BIT)					(REG &= ~(1 << (BIT)))
@@ -283,10 +309,15 @@ typedef struct
 /*
  * Clock Enable Macros for USARTx peripherals
  */
-#define USART1_PCCK_EN() 						REG_SET_BIT(RCC->APB2ENR, 14)
-#define USART2_PCCK_EN() 						REG_SET_BIT(RCC->APB1ENR, 17)
-#define USART4_PCCK_EN() 						REG_SET_BIT(RCC->APB1ENR, 19)
-#define USART5_PCCK_EN() 						REG_SET_BIT(RCC->APB1ENR, 20)
+#define USART1_PCLK_EN() 						REG_SET_BIT(RCC->APB2ENR, 14)
+#define USART2_PCLK_EN() 						REG_SET_BIT(RCC->APB1ENR, 17)
+#define USART4_PCLK_EN() 						REG_SET_BIT(RCC->APB1ENR, 19)
+#define USART5_PCLK_EN() 						REG_SET_BIT(RCC->APB1ENR, 20)
+
+/*
+ * Clock Enable Macros for ADCx peripherals
+ */
+#define ADC1_PCLK_EN() 							REG_SET_BIT(RCC->APB2ENR, 9)
 
 /*
  * Clock Enable Macros for SYSCFG peripheral
@@ -319,10 +350,15 @@ typedef struct
 /*
  * Clock Disable Macros for USARTx peripherals
  */
-#define USART1_PCCK_DI() 						REG_CLEAR_BIT(RCC->APB2ENR, 14)
-#define USART2_PCCK_DI() 						REG_CLEAR_BIT(RCC->APB1ENR, 17)
-#define USART4_PCCK_DI() 						REG_CLEAR_BIT(RCC->APB1ENR, 19)
-#define USART5_PCCK_DI() 						REG_CLEAR_BIT(RCC->APB1ENR, 20)
+#define USART1_PCLK_DI() 						REG_CLEAR_BIT(RCC->APB2ENR, 14)
+#define USART2_PCLK_DI() 						REG_CLEAR_BIT(RCC->APB1ENR, 17)
+#define USART4_PCLK_DI() 						REG_CLEAR_BIT(RCC->APB1ENR, 19)
+#define USART5_PCLK_DI() 						REG_CLEAR_BIT(RCC->APB1ENR, 20)
+
+/*
+ * Clock Disable Macros for ADCx peripherals
+ */
+#define ADC1_PCLK_DI() 							REG_CLEAR_BIT(RCC->APB2ENR, 9)
 
 /*
  * Clock Disable Macros for SYSCFG peripheral
@@ -599,6 +635,23 @@ typedef struct
 #define RCC_CFGR_PPRE1							8
 #define RCC_CFGR_PPRE2							11
 
+/******************************************************************************************
+ * Bit position definitions of ADC peripheral
+ ******************************************************************************************/
+
+/*
+ * Bit position definitions ADC_ISR
+ */
+#define ADC_ISR_ADRDY							0
+#define ADC_ISR_EOC								2
+
+/*
+ * Bit position definitions ADC_CR
+ */
+#define ADC_CR_ADEN								0
+#define ADC_CR_ADDIS							1
+#define ADC_CR_ADSTART							2
+
 void delay(uint32_t ms);
 
 #include "stm32l07xx_gpio_driver.h"
@@ -606,5 +659,6 @@ void delay(uint32_t ms);
 #include "stm32l07xx_i2c_driver.h"
 #include "stm32l07xx_usart_driver.h"
 #include "stm32l07xx_rcc_driver.h"
+#include "stm32l07xx_adc_driver.h"
 
 #endif /* STM32L07XX_H_ */

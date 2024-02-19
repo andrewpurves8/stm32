@@ -140,38 +140,38 @@ void USART_PeriClockControl(USART_RegDef_t *pUSARTx, uint8_t en)
 	{
 		if (pUSARTx == USART1)
 		{
-			USART1_PCCK_EN();
+			USART1_PCLK_EN();
 		}
 		else if (pUSARTx == USART2)
 		{
-			USART2_PCCK_EN();
+			USART2_PCLK_EN();
 		}
 		else if (pUSARTx == USART4)
 		{
-			USART4_PCCK_EN();
+			USART4_PCLK_EN();
 		}
 		else if (pUSARTx == USART5)
 		{
-			USART5_PCCK_EN();
+			USART5_PCLK_EN();
 		}
 	}
 	else
 	{
 		if (pUSARTx == USART1)
 		{
-			USART1_PCCK_DI();
+			USART1_PCLK_DI();
 		}
 		else if (pUSARTx == USART2)
 		{
-			USART2_PCCK_DI();
+			USART2_PCLK_DI();
 		}
 		else if (pUSARTx == USART4)
 		{
-			USART4_PCCK_DI();
+			USART4_PCLK_DI();
 		}
 		else if (pUSARTx == USART5)
 		{
-			USART5_PCCK_DI();
+			USART5_PCLK_DI();
 		}
 	}
 }

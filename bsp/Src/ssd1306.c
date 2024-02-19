@@ -253,12 +253,7 @@ void SSD1306_ReadBuffer(uint8_t* buf)
 void SSD1306_Print(const char* text, uint32_t length, uint8_t fontSize)
 {
     SSD1306_ClearDisplay();
-    uint8_t lineLength = (uint8_t) length;
     const uint8_t charsPerLine = SSD1306_SCREEN_WIDTH / (FONT_WIDTH * fontSize + 1);
-    if (length > charsPerLine)
-    {
-        lineLength = charsPerLine;
-    }
 
     uint8_t lineNumber = 0;
     uint8_t columnNumber = 0;
