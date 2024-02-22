@@ -7,9 +7,9 @@
 
 #include "stm32l07xx_spi_driver.h"
 
-static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle);
-static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle);
-static void spi_ovr_err_interrupt_handle(SPI_Handle_t *pSPIHandle);
+static void spiTxeInterruptHandle(SPI_Handle_t *pSPIHandle);
+static void spiRxneInterruptHandle(SPI_Handle_t *pSPIHandle);
+static void spiOvrErrInterruptHandle(SPI_Handle_t *pSPIHandle);
 
 void SPI_PeriClockControl(SPI_RegDef_t *pSPIx, uint8_t en)
 {
@@ -262,7 +262,7 @@ void SPI_IrqHandling(SPI_Handle_t *pHandle)
 	if (temp1 && temp2)
 	{
 		// handle TXE
-		spi_txe_interrupt_handle(pHandle);
+		spiTxeInterruptHandle(pHandle);
 	}
 
 	// check for RXNE
@@ -272,7 +272,7 @@ void SPI_IrqHandling(SPI_Handle_t *pHandle)
 	if (temp1 && temp2)
 	{
 		// handle RXNE
-		spi_rxne_interrupt_handle(pHandle);
+		spiRxneInterruptHandle(pHandle);
 	}
 
 	// check for ovr flag
@@ -282,13 +282,13 @@ void SPI_IrqHandling(SPI_Handle_t *pHandle)
 	if (temp1 && temp2)
 	{
 		// handle ovr error
-		spi_ovr_err_interrupt_handle(pHandle);
+		spiOvrErrInterruptHandle(pHandle);
 	}
 }
 
 // some helper function implementations
 
-static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle)
+static void spiTxeInterruptHandle(SPI_Handle_t *pSPIHandle)
 {
 	// check the DFF bit in CR1
 	if ((pSPIHandle->pSPIx->CR1 & (1 << SPI_CR1_DFF)))
@@ -319,7 +319,7 @@ static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle)
 	}
 }
 
-static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle)
+static void spiRxneInterruptHandle(SPI_Handle_t *pSPIHandle)
 {
 	// do rxing as per the dff
 	if (pSPIHandle->pSPIx->CR1 & (1 << 11))
@@ -342,11 +342,11 @@ static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle)
 	{
 		// reception is complete
 		SPI_CloseReception(pSPIHandle);
-		SPI_ApplicationEventCallback(pSPIHandle,SPI_EVENT_RX_CMPLT);
+		SPI_ApplicationEventCallback(pSPIHandle, SPI_EVENT_RX_CMPLT);
 	}
 }
 
-static void spi_ovr_err_interrupt_handle(SPI_Handle_t *pSPIHandle)
+static void spiOvrErrInterruptHandle(SPI_Handle_t *pSPIHandle)
 {
 	uint8_t temp;
 	// clear the ovr flag
