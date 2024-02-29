@@ -77,6 +77,7 @@
 /*
  * Base addresses of peripherals which are hanging on AHB bus
  */
+#define DMA_BASEADDR                     		(AHBPERIPH_BASEADDR)
 #define RCC_BASEADDR                     		(AHBPERIPH_BASEADDR + 0x1000)
 
 /*
@@ -250,6 +251,27 @@ typedef struct
 } ADC_RegDef_t;
 
 /*
+ * peripheral register definition structure for DMA
+ */
+typedef struct
+{
+	__vo uint32_t CCR;
+	__vo uint32_t CNDTR;
+	__vo uint32_t CPAR;
+	__vo uint32_t CMAR;
+	uint32_t RESERVED;
+} DMAChannel_RegDef_t;
+
+typedef struct
+{
+	__vo uint32_t ISR;
+	__vo uint32_t IFCR;
+	__vo DMAChannel_RegDef_t CHANNELS[7];
+	uint32_t RESERVED[15];
+	__vo uint32_t CSELR;
+} DMA_RegDef_t;
+
+/*
  * peripheral definitions ( Peripheral base addresses typecasted to xxx_RegDef_t)
  */
 #define GPIOA  									((GPIO_RegDef_t*) GPIOA_BASEADDR)
@@ -259,6 +281,7 @@ typedef struct
 #define GPIOE  									((GPIO_RegDef_t*) GPIOE_BASEADDR)
 #define GPIOH  									((GPIO_RegDef_t*) GPIOH_BASEADDR)
 
+#define DMA 									((DMA_RegDef_t*) DMA_BASEADDR)
 #define RCC 									((RCC_RegDef_t*) RCC_BASEADDR)
 
 #define EXTI									((EXTI_RegDef_t*) EXTI_BASEADDR)
@@ -325,6 +348,11 @@ typedef struct
 #define SYSCFG_PCLK_EN() 						REG_SET_BIT(RCC->APB2ENR, 0)
 
 /*
+ * Clock Enable Macros for DMA peripheral
+ */
+#define DMA_PCLK_EN() 							REG_SET_BIT(RCC->AHBENR, 0)
+
+/*
  * Clock Disable Macros for GPIOx peripherals
  */
 #define GPIOA_PCLK_DI()    						REG_CLEAR_BIT(RCC->IOPENR, 0)
@@ -366,6 +394,11 @@ typedef struct
 #define SYSCFG_PCLK_DI() 						REG_CLEAR_BIT(RCC->APB2ENR, 0)
 
 /*
+ * Clock Disable Macros for DMA peripheral
+ */
+#define DMA_PCLK_DI() 							REG_CLEAR_BIT(RCC->AHBENR, 0)
+
+/*
  *  Macros to reset GPIOx peripherals
  */
 #define GPIOA_REG_RESET()               		do { REG_SET_BIT(RCC->IOPRSTR, 0); REG_CLEAR_BIT(RCC->IOPRSTR, 0); } while (0)
@@ -391,6 +424,9 @@ typedef struct
 #define IRQ_NO_EXTI1_0 							5
 #define IRQ_NO_EXTI3_2 							6
 #define IRQ_NO_EXTI15_4 						7
+#define IRQ_NO_DMA1_CHANNEL1					9
+#define IRQ_NO_DMA1_CHANNEL3_2					10
+#define IRQ_NO_DMA1_CHANNEL7_4					11
 #define IRQ_NO_I2C3     						21
 #define IRQ_NO_I2C1     						23
 #define IRQ_NO_I2C2     						24
@@ -652,13 +688,48 @@ typedef struct
 #define ADC_CR_ADDIS							1
 #define ADC_CR_ADSTART							2
 
+/******************************************************************************************
+ * Bit position definitions of DMA peripheral
+ ******************************************************************************************/
+
+/*
+ * Bit position definitions DMA_ISR
+ */
+#define DMA_ISR_GIF								0
+#define DMA_ISR_TCIF							1
+#define DMA_ISR_HTIF							2
+#define DMA_ISR_TEIF							3
+
+/*
+ * Bit position definitions DMA_IFCR
+ */
+#define DMA_IFCR_CGIF							0
+#define DMA_IFCR_CTCIF							1
+#define DMA_IFCR_CHTIF							2
+#define DMA_IFCR_CTEIF							3
+
+/*
+ * Bit position definitions DMA_CCR
+ */
+#define DMA_CCR_EN								0
+#define DMA_CCR_TCIE							1
+#define DMA_CCR_TEIE							3
+#define DMA_CCR_DIR								4
+#define DMA_CCR_CIRC							5
+#define DMA_CCR_PINC							6
+#define DMA_CCR_MINC							7
+#define DMA_CCR_PSIZE							8
+#define DMA_CCR_MSIZE							10
+#define DMA_CCR_PL								12
+
 void delay(uint32_t ms);
 
-#include "stm32l07xx_gpio_driver.h"
-#include "stm32l07xx_spi_driver.h"
-#include "stm32l07xx_i2c_driver.h"
-#include "stm32l07xx_usart_driver.h"
-#include "stm32l07xx_rcc_driver.h"
-#include "stm32l07xx_adc_driver.h"
+// #include "stm32l07xx_gpio_driver.h"
+// #include "stm32l07xx_dma_driver.h"
+// #include "stm32l07xx_spi_driver.h"
+// #include "stm32l07xx_i2c_driver.h"
+// #include "stm32l07xx_usart_driver.h"
+// #include "stm32l07xx_rcc_driver.h"
+// #include "stm32l07xx_adc_driver.h"
 
 #endif /* STM32L07XX_H_ */

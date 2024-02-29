@@ -10,13 +10,9 @@
 #include "stm32l07xx.h"
 
 static const char* longString = "abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZ";
-static const char* dummyData = "gnhrjdkmcnvhjbuigkmrdnhxcjvkgmnfrbdhikfgmnhfjdkcmvnhgufikdcmnvhgfjdkmcnvhgjfkdmxncbhvjukgfmdnhxcjvkgmnfdhjckvmnghfjdkxmcnhvjgkfmdnhcjvkmgfndhjxkcmvnfjdkx,cmvnhjgfkmdnchvjmfnhjgrdkxilujfmghuitorpeirujhngfkcidjhnejkrfgiujvhfndjhfnvjkcudhbnjfghvnfjdhfgjnvgnhrjdkmcnvhjbuigkmrdnhxcjvkgmnfrbdhikfgmnhfjdkcmvnhgufikdcmnvhgfjdkmcnvhgjfkdmxncbhvjukgfmdnhxcjvkgmnfdhjckvmnghfjdkxmcnhvjgkfmdnhcjvkmgfndhjxkcmvnfjdkx,cmvnhjgfkmdnchvjmfnhjgrdkxilujfmghuitorpeirujhngfkcidjhnejkrfgiujvhfndjhfnvjkcudhbnjfghvnfjdhfgjnvgnhrjdkmcnvhjbui";
 static uint8_t slaveRcvBuf[1000];
 static uint8_t masterRcvBuf[1000];
 static uint8_t slaveRcvComplete = FALSE;
-static uint8_t masterRcvComplete = FALSE;
-static uint8_t slaveReadByte;
-static uint8_t masterReadByte;
 
 static SPI_Handle_t spi1Handle;
 static SPI_Handle_t spi2Handle;
@@ -61,12 +57,13 @@ void SPI1_Inits(void)
 	spi1Handle.pSPIx = SPI1;
 	spi1Handle.spiConfig.busConfig = SPI_BUS_CONFIG_FD;
 	spi1Handle.spiConfig.deviceMode = SPI_DEVICE_MODE_MASTER;
-//	 spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV32;
-	spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV256;
+	spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV32;
+	// spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV64;
 	spi1Handle.spiConfig.cpol = SPI_CPOL_LOW;
 	spi1Handle.spiConfig.cpha = SPI_CPHA_LOW;
 	spi1Handle.spiConfig.ssm = SPI_SSM_DI; // hardware slave management enabled for NSS pin
-	spi1Handle.spiConfig.dff = SPI_DFF_8BITS;
+	// spi1Handle.spiConfig.dff = SPI_DFF_8BITS;
+	spi1Handle.spiConfig.dff = SPI_DFF_16BITS;
 
 	SPI_Init(&spi1Handle);
 }
@@ -111,20 +108,19 @@ void SPI2_Inits(void)
 	spi2Handle.pSPIx = SPI2;
 	spi2Handle.spiConfig.busConfig = SPI_BUS_CONFIG_FD;
 	spi2Handle.spiConfig.deviceMode = SPI_DEVICE_MODE_SLAVE;
-//	 spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV32;
-	spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV256;
+	spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV32;
+	// spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV64;
 	spi2Handle.spiConfig.cpol = SPI_CPOL_LOW;
 	spi2Handle.spiConfig.cpha = SPI_CPHA_LOW;
 	spi2Handle.spiConfig.ssm = SPI_SSM_DI; // hardware slave management enabled for NSS pin
-	spi2Handle.spiConfig.dff = SPI_DFF_8BITS;
+	// spi2Handle.spiConfig.dff = SPI_DFF_8BITS;
+	spi2Handle.spiConfig.dff = SPI_DFF_16BITS;
 
 	SPI_Init(&spi2Handle);
 }
 
 int main(void)
 {
-	uint8_t dummyWrite = 0xff;
-	uint8_t dummyRead;
 	uint32_t dataLen = strlen(longString);
 
 	RCC_SetSysClk(SYS_CLK_HSI);
@@ -153,31 +149,32 @@ int main(void)
 	{
 		delay(250);
 
-		while (SPI_SendDataIT(&spi1Handle, longString, dataLen) == SPI_BUSY_IN_TX);
-		while (SPI_ReceiveDataIT(&spi2Handle, &slaveRcvBuf, dataLen) == SPI_BUSY_IN_RX);
+		while (SPI_SendDataIT(&spi2Handle, longString, dataLen) == SPI_BUSY_IN_TX);
+		// while (SPI_ReceiveDataIT(&spi1Handle, &masterRcvBuf, dataLen) == SPI_BUSY_IN_RX);
+		SPI_ReceiveData(&spi1Handle, &masterRcvBuf, dataLen);
 
-		while (!slaveRcvComplete);
-		slaveRcvComplete = FALSE;
+		// while (SPI_ReceiveDataIT(&spi2Handle, &slaveRcvBuf, dataLen) == SPI_BUSY_IN_RX);
+		// // while (SPI_SendDataIT(&spi1Handle, longString, dataLen) == SPI_BUSY_IN_TX);
+		// SPI_SendData(SPI1, longString, dataLen);
 
-		for (uint32_t i = 0; i < dataLen; i++)
-		{
-			char c = (char) slaveRcvBuf[i];
-			if (c >= 'A' && c <= 'Z')
-			{
-				slaveRcvBuf[i] = c + 32;
-			}
-			else if (c >= 'a' && c <= 'z')
-			{
-				slaveRcvBuf[i] = c - 32;
-			}
-		}
+		// while (!slaveRcvComplete);
+		// slaveRcvComplete = FALSE;
 
-		while (SPI_SendDataIT(&spi2Handle, &slaveRcvBuf, dataLen) == SPI_BUSY_IN_TX);
-		while (SPI_SendDataIT(&spi1Handle, dummyData, dataLen) == SPI_BUSY_IN_TX);
-		while (SPI_ReceiveDataIT(&spi1Handle, &masterRcvBuf, dataLen) == SPI_BUSY_IN_RX);
-		
-		while (!masterRcvComplete);
-		masterRcvComplete = FALSE;
+		// for (uint32_t i = 0; i < dataLen; i++)
+		// {
+		// 	char c = (char) slaveRcvBuf[i];
+		// 	if (c >= 'A' && c <= 'Z')
+		// 	{
+		// 		slaveRcvBuf[i] = c + 32;
+		// 	}
+		// 	else if (c >= 'a' && c <= 'z')
+		// 	{
+		// 		slaveRcvBuf[i] = c - 32;
+		// 	}
+		// }
+
+		// while (SPI_SendDataIT(&spi2Handle, &slaveRcvBuf, dataLen) == SPI_BUSY_IN_TX);
+		// SPI_ReceiveData(&spi1Handle, &masterRcvBuf, dataLen);
 	}
 
 	return 0;
@@ -195,15 +192,8 @@ void SPI2_IRQHandler(void)
 
 void SPI_ApplicationEventCallback(SPI_Handle_t *pSPIHandle, uint8_t appEv)
 {
-	if (appEv == SPI_EVENT_RX_CMPLT)
+	if (appEv == SPI_EVENT_RX_CMPLT && pSPIHandle == &spi2Handle)
 	{
-		if (pSPIHandle == &spi1Handle)
-		{
-			masterRcvComplete = TRUE;
-		}
-		else if (pSPIHandle == &spi2Handle)
-		{
-			slaveRcvComplete = TRUE;
-		}
+		slaveRcvComplete = TRUE;
 	}
 }

@@ -9,6 +9,7 @@
 #define INC_STM32L07XX_SPI_DRIVER_H_
 
 #include "stm32l07xx.h"
+#include "stm32l07xx_dma_driver.h"
 
 /*
  *  Configuration structure for SPIx peripheral
@@ -22,6 +23,7 @@ typedef struct
 	uint8_t cpol;
 	uint8_t cpha;
 	uint8_t ssm;
+	uint8_t dma;
 } SPI_Config_t;
 
 /*
@@ -57,8 +59,8 @@ typedef struct
 /*
  * @SPI_DeviceMode
  */
-#define SPI_DEVICE_MODE_MASTER 					1
 #define SPI_DEVICE_MODE_SLAVE					0
+#define SPI_DEVICE_MODE_MASTER 					1
 
 /*
  * @SPI_BusConfig
@@ -88,27 +90,26 @@ typedef struct
 /*
  * @CPOL
  */
-#define SPI_CPOL_HIGH 							1
 #define SPI_CPOL_LOW 							0
+#define SPI_CPOL_HIGH 							1
 
 /*
  * @CPHA
  */
-#define SPI_CPHA_HIGH 							1
 #define SPI_CPHA_LOW 							0
+#define SPI_CPHA_HIGH 							1
 
 /*
  * @SPI_SSM
  */
-#define SPI_SSM_EN 								1
 #define SPI_SSM_DI 								0
+#define SPI_SSM_EN 								1
 
 /*
- * SPI related status flags definitions
+ * @SPI_DMA
  */
-#define SPI_TXE_FLAG 							(1 << SPI_SR_TXE)
-#define SPI_RXNE_FLAG 							(1 << SPI_SR_RXNE)
-#define SPI_BUSY_FLAG 							(1 << SPI_SR_BSY)
+#define SPI_DMA_DI 								0
+#define SPI_DMA_EN 								1
 
 /******************************************************************************************
  *								APIs supported by this driver
@@ -129,10 +130,14 @@ void SPI_DeInit(SPI_RegDef_t *pSPIx);
  * Data Send and Receive
  */
 void SPI_SendData(SPI_RegDef_t *pSPIx, uint8_t *pTxBuffer, uint32_t len);
-void SPI_ReceiveData(SPI_RegDef_t *pSPIx, uint8_t *pRxBuffer, uint32_t len);
+void SPI_ReceiveData(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t len);
 
 uint8_t SPI_SendDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pTxBuffer, uint32_t len);
 uint8_t SPI_ReceiveDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t len);
+
+// whether this sends/receives depends on the configuration of pDMAHandle
+// typedef struct DMA_Handle_t DMA_Handle_t;
+void SPI_StartDMA(SPI_RegDef_t *pSPIx, DMA_Handle_t *pDMAHandle, uint8_t *pBuffer, uint32_t len);
 
 /*
  * IRQ Configuration and ISR handling
@@ -147,7 +152,6 @@ void SPI_IrqHandling(SPI_Handle_t *pHandle);
 void SPI_PeripheralControl(SPI_RegDef_t *pSPIx, uint8_t en);
 void SPI_SsiConfig(SPI_RegDef_t *pSPIx, uint8_t en);
 void SPI_SsoeConfig(SPI_RegDef_t *pSPIx, uint8_t en);
-uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx, uint32_t flagName);
 void SPI_ClearOVRFlag(SPI_RegDef_t *pSPIx);
 void SPI_CloseTransmisson(SPI_Handle_t *pSPIHandle);
 void SPI_CloseReception(SPI_Handle_t *pSPIHandle);
