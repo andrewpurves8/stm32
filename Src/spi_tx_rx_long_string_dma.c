@@ -7,23 +7,21 @@
 
 #include <stdio.h>
 #include <string.h>
-// #include "stm32l07xx.h"
 #include "stm32l07xx_dma_driver.h"
 #include "stm32l07xx_spi_driver.h"
 #include "stm32l07xx_gpio_driver.h"
 #include "stm32l07xx_rcc_driver.h"
 
-static const char* longString = "abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZ";
+static const char* longString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static uint8_t slaveRcvBuf[1000];
 static uint8_t masterRcvBuf[1000];
-static uint8_t slaveRcvComplete = FALSE;
+static uint8_t masterRcvComplete = FALSE;
+static volatile uint8_t slaveRcvComplete = FALSE;
 
 static SPI_Handle_t spi1Handle;
 static SPI_Handle_t spi2Handle;
-static DMA_Handle_t spi1RxDmaHandle;
 static DMA_Handle_t spi1TxDmaHandle;
 static DMA_Handle_t spi2RxDmaHandle;
-static DMA_Handle_t spi2TxDmaHandle;
 
 /*
  * PA6 --> SPI1_MISO
@@ -65,13 +63,11 @@ void SPI1_Inits(void)
 	spi1Handle.pSPIx = SPI1;
 	spi1Handle.spiConfig.busConfig = SPI_BUS_CONFIG_FD;
 	spi1Handle.spiConfig.deviceMode = SPI_DEVICE_MODE_MASTER;
-	// spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV32;
-	spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV64;
+	spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV2;
 	spi1Handle.spiConfig.cpol = SPI_CPOL_LOW;
 	spi1Handle.spiConfig.cpha = SPI_CPHA_LOW;
 	spi1Handle.spiConfig.ssm = SPI_SSM_DI; // hardware slave management enabled for NSS pin
 	spi1Handle.spiConfig.dff = SPI_DFF_8BITS;
-	// spi1Handle.spiConfig.dff = SPI_DFF_16BITS;
 	spi1Handle.spiConfig.dma = SPI_DMA_EN;
 
 	SPI_Init(&spi1Handle);
@@ -117,13 +113,11 @@ void SPI2_Inits(void)
 	spi2Handle.pSPIx = SPI2;
 	spi2Handle.spiConfig.busConfig = SPI_BUS_CONFIG_FD;
 	spi2Handle.spiConfig.deviceMode = SPI_DEVICE_MODE_SLAVE;
-	// spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV32;
-	spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV64;
+	spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV2;
 	spi2Handle.spiConfig.cpol = SPI_CPOL_LOW;
 	spi2Handle.spiConfig.cpha = SPI_CPHA_LOW;
 	spi2Handle.spiConfig.ssm = SPI_SSM_DI; // hardware slave management enabled for NSS pin
 	spi2Handle.spiConfig.dff = SPI_DFF_8BITS;
-	// spi2Handle.spiConfig.dff = SPI_DFF_16BITS;
 	spi2Handle.spiConfig.dma = SPI_DMA_EN;
 
 	SPI_Init(&spi2Handle);
@@ -138,52 +132,30 @@ void SPI2_Inits(void)
  */
 void SPI1_DMA_Inits(void)
 {
-	spi1RxDmaHandle.channel = 2;
-	spi1RxDmaHandle.channelSelection = 0b0001;
-	spi1RxDmaHandle.direction = DMA_DIR_READ_FROM_PERIPHERAL;
-	spi1RxDmaHandle.memoryIncrement = DMA_MINC_EN;
-	spi1RxDmaHandle.memorySize = DMA_MSIZE_8BITS;
-	spi1RxDmaHandle.mode = DMA_MODE_NORMAL;
-	spi1RxDmaHandle.peripheralIncrement = DMA_PINC_DI;
-	spi1RxDmaHandle.peripheralSize = DMA_PSIZE_8BITS;
-	spi1RxDmaHandle.priority = DMA_PRIO_VERY_HIGH;
-	DMA_Init(&spi1RxDmaHandle);
-
-	// spi1TxDmaHandle.channel = 3;
-	// spi1TxDmaHandle.channelSelection = 0b0001;
-	// spi1TxDmaHandle.direction = DMA_DIR_READ_FROM_MEMORY;
-	// spi1TxDmaHandle.memoryIncrement = DMA_MINC_EN;
-	// spi1TxDmaHandle.memorySize = DMA_MSIZE_8BITS;
-	// spi1TxDmaHandle.mode = DMA_MODE_NORMAL;
-	// spi1TxDmaHandle.peripheralIncrement = DMA_PINC_DI;
-	// spi1TxDmaHandle.peripheralSize = DMA_PSIZE_8BITS;
-	// spi1TxDmaHandle.priority = DMA_PRIO_VERY_HIGH;
-	// DMA_Init(&spi1TxDmaHandle);
+	spi1TxDmaHandle.channel = 3;
+	spi1TxDmaHandle.channelSelection = 0b0001;
+	spi1TxDmaHandle.direction = DMA_DIR_READ_FROM_MEMORY;
+	spi1TxDmaHandle.memoryIncrement = DMA_MINC_EN;
+	spi1TxDmaHandle.memorySize = DMA_MSIZE_8BITS;
+	spi1TxDmaHandle.mode = DMA_MODE_NORMAL;
+	spi1TxDmaHandle.peripheralIncrement = DMA_PINC_DI;
+	spi1TxDmaHandle.peripheralSize = DMA_PSIZE_8BITS;
+	spi1TxDmaHandle.priority = DMA_PRIO_VERY_HIGH;
+	DMA_Init(&spi1TxDmaHandle);
 }
 
 void SPI2_DMA_Inits(void)
 {
-	// spi2RxDmaHandle.channel = 4;
-	// spi2RxDmaHandle.channelSelection = 0b0010;
-	// spi2RxDmaHandle.direction = DMA_DIR_READ_FROM_PERIPHERAL;
-	// spi2RxDmaHandle.memoryIncrement = DMA_MINC_EN;
-	// spi2RxDmaHandle.memorySize = DMA_MSIZE_8BITS;
-	// spi2RxDmaHandle.mode = DMA_MODE_NORMAL;
-	// spi2RxDmaHandle.peripheralIncrement = DMA_PINC_DI;
-	// spi2RxDmaHandle.peripheralSize = DMA_PSIZE_8BITS;
-	// spi2RxDmaHandle.priority = DMA_PRIO_VERY_HIGH;
-	// DMA_Init(&spi2RxDmaHandle);
-	
-	spi2TxDmaHandle.channel = 5;
-	spi2TxDmaHandle.channelSelection = 0b0010;
-	spi2TxDmaHandle.direction = DMA_DIR_READ_FROM_MEMORY;
-	spi2TxDmaHandle.memoryIncrement = DMA_MINC_EN;
-	spi2TxDmaHandle.memorySize = DMA_MSIZE_8BITS;
-	spi2TxDmaHandle.mode = DMA_MODE_NORMAL;
-	spi2TxDmaHandle.peripheralIncrement = DMA_PINC_DI;
-	spi2TxDmaHandle.peripheralSize = DMA_PSIZE_8BITS;
-	spi2TxDmaHandle.priority = DMA_PRIO_VERY_HIGH;
-	DMA_Init(&spi2TxDmaHandle);
+	spi2RxDmaHandle.channel = 4;
+	spi2RxDmaHandle.channelSelection = 0b0010;
+	spi2RxDmaHandle.direction = DMA_DIR_READ_FROM_PERIPHERAL;
+	spi2RxDmaHandle.memoryIncrement = DMA_MINC_EN;
+	spi2RxDmaHandle.memorySize = DMA_MSIZE_8BITS;
+	spi2RxDmaHandle.mode = DMA_MODE_NORMAL;
+	spi2RxDmaHandle.peripheralIncrement = DMA_PINC_DI;
+	spi2RxDmaHandle.peripheralSize = DMA_PSIZE_8BITS;
+	spi2RxDmaHandle.priority = DMA_PRIO_VERY_HIGH;
+	DMA_Init(&spi2RxDmaHandle);
 }
 
 int main(void)
@@ -212,11 +184,6 @@ int main(void)
 	DMA_IrqInterruptConfig(IRQ_NO_DMA1_CHANNEL3_2, ENABLE);
 	DMA_IrqInterruptConfig(IRQ_NO_DMA1_CHANNEL7_4, ENABLE);
 
-	DMA_PeripheralControl(2, ENABLE);
-	// DMA_PeripheralControl(3, ENABLE);
-	// DMA_PeripheralControl(4, ENABLE);
-	DMA_PeripheralControl(5, ENABLE);
-
 	SPI_PeripheralControl(SPI1, ENABLE);
 	SPI_PeripheralControl(SPI2, ENABLE);
 
@@ -224,8 +191,10 @@ int main(void)
 	{
 		delay(250);
 
-		SPI_StartDMA(SPI1, &spi1RxDmaHandle, &masterRcvBuf, dataLen);
-		SPI_StartDMA(SPI2, &spi2TxDmaHandle, longString, dataLen);
+		SPI_ReceiveDMA(SPI2, &spi2RxDmaHandle, &slaveRcvBuf, dataLen);
+		SPI_SendDMA(SPI1, &spi1TxDmaHandle, longString, dataLen);
+
+		while (!slaveRcvComplete);
 	}
 
 	return 0;
@@ -233,20 +202,22 @@ int main(void)
 
 void DMA1_Channel2_3_IRQHandler(void)
 {
-	DMA_IrqHandling(&spi1RxDmaHandle);
 	DMA_IrqHandling(&spi1TxDmaHandle);
 }
 
 void DMA1_Channel4_7_IRQHandler(void)
 {
 	DMA_IrqHandling(&spi2RxDmaHandle);
-	DMA_IrqHandling(&spi2TxDmaHandle);
 }
 
 void DMA_ApplicationEventCallback(DMA_Handle_t *pDMAHandle, uint8_t appEv)
 {
 	if (pDMAHandle == &spi1RxDmaHandle && appEv == DMA_EVENT_CMPLT)
 	{
-		;
+		masterRcvComplete = TRUE;
+	}
+	else if (pDMAHandle == &spi2RxDmaHandle && appEv == DMA_EVENT_CMPLT)
+	{
+		slaveRcvComplete = TRUE;
 	}
 }

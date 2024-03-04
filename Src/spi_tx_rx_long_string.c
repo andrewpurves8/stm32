@@ -7,7 +7,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "stm32l07xx.h"
+#include "stm32l07xx_spi_driver.h"
+#include "stm32l07xx_gpio_driver.h"
+#include "stm32l07xx_rcc_driver.h"
 
 static const char* longString = "abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZabcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVQXYZ";
 static uint8_t slaveRcvBuf[1000];
@@ -58,11 +60,9 @@ void SPI1_Inits(void)
 	spi1Handle.spiConfig.busConfig = SPI_BUS_CONFIG_FD;
 	spi1Handle.spiConfig.deviceMode = SPI_DEVICE_MODE_MASTER;
 	spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV32;
-	// spi1Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV64;
 	spi1Handle.spiConfig.cpol = SPI_CPOL_LOW;
 	spi1Handle.spiConfig.cpha = SPI_CPHA_LOW;
 	spi1Handle.spiConfig.ssm = SPI_SSM_DI; // hardware slave management enabled for NSS pin
-	// spi1Handle.spiConfig.dff = SPI_DFF_8BITS;
 	spi1Handle.spiConfig.dff = SPI_DFF_16BITS;
 
 	SPI_Init(&spi1Handle);
@@ -109,11 +109,9 @@ void SPI2_Inits(void)
 	spi2Handle.spiConfig.busConfig = SPI_BUS_CONFIG_FD;
 	spi2Handle.spiConfig.deviceMode = SPI_DEVICE_MODE_SLAVE;
 	spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV32;
-	// spi2Handle.spiConfig.sclkSpeed = SPI_SCLK_SPEED_DIV64;
 	spi2Handle.spiConfig.cpol = SPI_CPOL_LOW;
 	spi2Handle.spiConfig.cpha = SPI_CPHA_LOW;
 	spi2Handle.spiConfig.ssm = SPI_SSM_DI; // hardware slave management enabled for NSS pin
-	// spi2Handle.spiConfig.dff = SPI_DFF_8BITS;
 	spi2Handle.spiConfig.dff = SPI_DFF_16BITS;
 
 	SPI_Init(&spi2Handle);
@@ -149,9 +147,12 @@ int main(void)
 	{
 		delay(250);
 
-		while (SPI_SendDataIT(&spi2Handle, longString, dataLen) == SPI_BUSY_IN_TX);
-		// while (SPI_ReceiveDataIT(&spi1Handle, &masterRcvBuf, dataLen) == SPI_BUSY_IN_RX);
-		SPI_ReceiveData(&spi1Handle, &masterRcvBuf, dataLen);
+		while (SPI_SendDataIT(&spi1Handle, longString, dataLen) == SPI_BUSY_IN_TX);
+		SPI_ReceiveData(&spi2Handle, &slaveRcvBuf, dataLen);
+
+		// while (SPI_SendDataIT(&spi2Handle, longString, dataLen) == SPI_BUSY_IN_TX);
+		// // while (SPI_ReceiveDataIT(&spi1Handle, &masterRcvBuf, dataLen) == SPI_BUSY_IN_RX);
+		// SPI_ReceiveData(&spi1Handle, &masterRcvBuf, dataLen);
 
 		// while (SPI_ReceiveDataIT(&spi2Handle, &slaveRcvBuf, dataLen) == SPI_BUSY_IN_RX);
 		// // while (SPI_SendDataIT(&spi1Handle, longString, dataLen) == SPI_BUSY_IN_TX);

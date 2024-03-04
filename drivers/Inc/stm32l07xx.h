@@ -267,7 +267,7 @@ typedef struct
 	__vo uint32_t ISR;
 	__vo uint32_t IFCR;
 	__vo DMAChannel_RegDef_t CHANNELS[7];
-	uint32_t RESERVED[15];
+	uint32_t RESERVED[5];
 	__vo uint32_t CSELR;
 } DMA_RegDef_t;
 

@@ -137,7 +137,8 @@ uint8_t SPI_ReceiveDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t
 
 // whether this sends/receives depends on the configuration of pDMAHandle
 // typedef struct DMA_Handle_t DMA_Handle_t;
-void SPI_StartDMA(SPI_RegDef_t *pSPIx, DMA_Handle_t *pDMAHandle, uint8_t *pBuffer, uint32_t len);
+void SPI_SendDMA(SPI_RegDef_t *pSPIx, DMA_Handle_t *pDMAHandle, uint8_t *pBuffer, uint32_t len);
+void SPI_ReceiveDMA(SPI_RegDef_t *pSPIx, DMA_Handle_t *pDMAHandle, uint8_t *pBuffer, uint32_t len);
 
 /*
  * IRQ Configuration and ISR handling

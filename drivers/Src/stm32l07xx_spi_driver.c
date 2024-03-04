@@ -143,12 +143,6 @@ void SPI_Init(SPI_Handle_t *pSPIHandle)
 
 	// configure the device mode
 	cr1Value |= pSPIHandle->spiConfig.deviceMode << SPI_CR1_MSTR;
-	
-	if (pSPIHandle->spiConfig.dma == SPI_DMA_EN)
-	{
-		REG_SET_BIT(pSPIHandle->pSPIx->CR2, SPI_CR2_RXDMAEN);
-		REG_SET_BIT(pSPIHandle->pSPIx->CR2, SPI_CR2_TXDMAEN);
-	}
 
 	// configure the bus config
 	if (pSPIHandle->spiConfig.busConfig == SPI_BUS_CONFIG_FD)
@@ -354,39 +348,40 @@ uint8_t SPI_ReceiveDataIT(SPI_Handle_t *pSPIHandle, uint8_t *pRxBuffer, uint32_t
 	return state;
 }
 
-void SPI_StartDMA(SPI_RegDef_t *pSPIx, DMA_Handle_t *pDMAHandle, uint8_t *pBuffer, uint32_t len)
+void SPI_SendDMA(SPI_RegDef_t *pSPIx, DMA_Handle_t *pDMAHandle, uint8_t *pBuffer, uint32_t len)
 {
 	while (DMA_StartIT(pDMAHandle, (uint32_t) pBuffer, (uint32_t) &pSPIx->DR, len) != DMA_READY);
+	REG_SET_BIT(pSPIx->CR2, SPI_CR2_TXEIE);
+	REG_SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);
+	SPI_PeripheralControl(pSPIx, ENABLE);
+}
+
+void SPI_ReceiveDMA(SPI_RegDef_t *pSPIx, DMA_Handle_t *pDMAHandle, uint8_t *pBuffer, uint32_t len)
+{
+	while (DMA_StartIT(pDMAHandle, (uint32_t) pBuffer, (uint32_t) &pSPIx->DR, len) != DMA_READY);
+	REG_SET_BIT(pSPIx->CR2, SPI_CR2_RXNEIE);
+	REG_SET_BIT(pSPIx->CR2, SPI_CR2_RXDMAEN);
+	SPI_PeripheralControl(pSPIx, ENABLE);
 }
 
 void SPI_IrqHandling(SPI_Handle_t *pHandle)
 {
-	uint8_t temp1, temp2;
 	// first lets check for TXE
-	temp1 = REG_TEST_BIT(pHandle->pSPIx->SR, SPI_SR_TXE);
-	temp2 = REG_TEST_BIT(pHandle->pSPIx->CR2, SPI_CR2_TXEIE);
-
-	if (temp1 && temp2)
+	if (REG_TEST_BIT(pHandle->pSPIx->SR, SPI_SR_TXE) && REG_TEST_BIT(pHandle->pSPIx->CR2, SPI_CR2_TXEIE))
 	{
 		// handle TXE
 		spiTxeInterruptHandle(pHandle);
 	}
 
 	// check for RXNE
-	temp1 = REG_TEST_BIT(pHandle->pSPIx->SR, SPI_SR_RXNE);
-	temp2 = REG_TEST_BIT(pHandle->pSPIx->CR2, SPI_CR2_RXNEIE);
-
-	if (temp1 && temp2)
+	if (REG_TEST_BIT(pHandle->pSPIx->SR, SPI_SR_RXNE) && REG_TEST_BIT(pHandle->pSPIx->CR2, SPI_CR2_RXNEIE))
 	{
 		// handle RXNE
 		spiRxneInterruptHandle(pHandle);
 	}
 
 	// check for ovr flag
-	temp1 = REG_TEST_BIT(pHandle->pSPIx->SR, SPI_SR_OVR);
-	temp2 = REG_TEST_BIT(pHandle->pSPIx->CR2, SPI_CR2_ERRIE);
-
-	if (temp1 && temp2)
+	if (REG_TEST_BIT(pHandle->pSPIx->SR, SPI_SR_OVR) && REG_TEST_BIT(pHandle->pSPIx->CR2, SPI_CR2_ERRIE))
 	{
 		// handle ovr error
 		spiOvrErrInterruptHandle(pHandle);
